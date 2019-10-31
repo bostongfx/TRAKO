@@ -90,7 +90,11 @@ def convert(input, output=None):
   line_length = lines[i]
   line_index = 0
 
+  lines_just_length = []
+
   while (line_index<number_of_streamlines):
+
+      lines_just_length.append(line_length)
 
       current_line = lines[i+1+line_index:i+1+line_length+line_index]
       current_indices = []
@@ -112,6 +116,7 @@ def convert(input, output=None):
       if line_index < number_of_streamlines:
           line_length = lines[i+line_index]
 
+
   #
   # now, create fiber cluster data structure
   #
@@ -119,7 +124,7 @@ def convert(input, output=None):
 
     'number_of_streamlines': number_of_streamlines,
     'per_vertex_data': collections.OrderedDict(),
-    'indices': ordered_indices
+    'indices': lines_just_length#ordered_indices
 
   }
 
