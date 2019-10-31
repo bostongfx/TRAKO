@@ -141,9 +141,15 @@ def convert(input, output=None):
 
     thisdata = scalars[i]#[]
 
+    if vtknumberofcomponents in vtkNumberOfComponents_to_gltfType:
+      gltfType = vtkNumberOfComponents_to_gltfType[vtknumberofcomponents]
+    else:
+      # for now, we will just pass it through
+      gltfType = vtknumberofcomponents
+
     fibercluster['per_vertex_data'][s] = {
       'componentType': vtkDataType_to_gltfComponentType[vtkdatatype],
-      'type': vtkNumberOfComponents_to_gltfType[vtknumberofcomponents],
+      'type': gltfType,
       'data': thisdata
     }
 
@@ -207,9 +213,13 @@ def fibercluster2gltf(fibercluster, draco=False):
 
     if componentType == pygltflib.FLOAT:
       asciiType = 'f'
+
+    elif componentType == pygltflib.UNSIGNED_INT:
+      asciiType = 'I'
+
     else:
       asciiType = 'f'
-      print('Type not supported!')
+      print('Type not supported!', componentType)
 
     if draco:
 

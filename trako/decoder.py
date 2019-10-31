@@ -3,11 +3,10 @@ from .gltfi2vtk import *
 class Decoder():
 
   @staticmethod
-  def toVtp(vtpfile, draco=True):
+  def toVtp(tkoFile, draco=True):
     '''
     '''
     
-    vtp = convert(vtpfile)
-    # vtp = fibercluster2vtp(fibercluster, draco=draco)
+    vtp = convert(tkoFile)
 
     return vtp
