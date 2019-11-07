@@ -1,0 +1,14 @@
+
+Position (True/False) treats points as X,Y,Z coordinates.
+
+Sequential (True/False) keeps track of the order of points. Should be always on for Trako.
+
+Quantization bits should be an integer between 0 and 31
+
+Compression level should be an integer between 0 and 10
+
+Quantization_range is a float representing the size of the bounding cube for the mesh.
+By default it is the range of the dimension of the input vertices with greatest range.
+
+Quantization_origin is the point in space where the bounding box begins. By default it is
+a point where each coordinate is the minimum of that coordinate among the input vertices.
