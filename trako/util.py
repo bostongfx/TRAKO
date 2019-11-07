@@ -1,5 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import vtk
+from vtk.util import numpy_support
+
 
 class Util:
 
@@ -50,3 +53,71 @@ class Util:
     ax.tick_params(axis='y', colors='cyan')
 
     plt.show()
+
+
+  @staticmethod
+  def loadvtp(a):
+
+    r = vtk.vtkXMLPolyDataReader()
+    r.SetFileName(a)
+    r.Update()
+    polydata = r.GetOutput()
+
+    points = numpy_support.vtk_to_numpy(polydata.GetPoints().GetData())
+    lines = numpy_support.vtk_to_numpy(polydata.GetLines().GetData())
+    number_of_streamlines = polydata.GetLines().GetNumberOfCells()
+
+    #
+    # scalars are per point
+    #
+    pointdata = polydata.GetPointData()
+    number_of_scalars = pointdata.GetNumberOfArrays()
+    scalars = []
+    scalar_types = []
+    scalar_names = []
+
+    for i in range(number_of_scalars):
+        arr_name = pointdata.GetArrayName(i)
+        scalar_names.append(str(arr_name))
+        arr = pointdata.GetArray(i)
+
+        number_of_components = arr.GetNumberOfComponents()
+        data_type = arr.GetDataType()
+
+        scalar_types.append((data_type, number_of_components))
+
+        scalars.append(numpy_support.vtk_to_numpy(arr))
+
+
+    #
+    # properties are per streamline
+    #
+    celldata = polydata.GetCellData()
+    number_of_properties = celldata.GetNumberOfArrays()
+    properties = []
+    property_types = []
+    property_names = []
+
+    for i in range(number_of_properties):
+        arr_name = celldata.GetArrayName(i)
+        property_names.append(str(arr_name))
+        arr = celldata.GetArray(i)
+
+        number_of_components = arr.GetNumberOfComponents()
+        data_type = arr.GetDataType()
+
+        property_types.append((data_type, number_of_components))
+
+        properties.append(numpy_support.vtk_to_numpy(arr))
+
+    out = {
+      'points': points,
+      'lines': lines,
+      'number_of_streamlines': number_of_streamlines,
+      'scalar_names': scalar_names,
+      'scalars': scalars,
+      'property_names': property_names,
+      'properties': properties
+    }
+
+    return out

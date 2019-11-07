@@ -1,0 +1,53 @@
+#!/usr/bin/env python3
+import trako as TKO
+import argparse, os, re, sys
+
+def trakofy(input, output, config):
+  '''
+  '''
+  if config:
+    try:
+      with open(config, 'r') as f:
+        config = eval(f.read()) # TODO: fix security flaw
+    except:
+      print('ERROR: Loading config failed.')
+      sys.exit(2)
+
+  if os.path.splitext(input)[1].lower() == '.vtp':
+
+    originalsize = os.path.getsize(input)
+
+    tko = TKO.Encoder.fromVtp(input, config)
+    tko.save(output)
+
+    compressedsize = os.path.getsize(output)
+
+    return [originalsize, compressedsize]
+
+  else:
+    print('ERROR: Only .vtp files are currently supported.')
+    sys.exit(2)
+
+
+
+if __name__ == "__main__":
+
+  parser = argparse.ArgumentParser(description='T R A K O: Compress streamlines.')
+  parser.add_argument('-i','--input', help='Input streamline file (.vtp)', required=True)
+  parser.add_argument('-o','--output', help='Output compressed file (.tko)', required=True)
+  parser.add_argument('-c','--config', help='Optional configuration file.', default=None)
+
+  args = parser.parse_args()
+
+  print()
+  print('>> T R A K O.')
+  print()
+
+  originalsize, compressedsize = trakofy(args.input, args.output, config=args.config)
+
+  print()
+  print('From', originalsize, 'bytes to', compressedsize, 'bytes.')
+  print('Ratio', originalsize / float(compressedsize))
+  print()
+  print(' (x_x) tko-ed.')
+  print()

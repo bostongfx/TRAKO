@@ -1,0 +1,82 @@
+#!/usr/bin/env python3
+import trako as TKO
+import numpy as np
+import argparse, os, re, sys
+from prettytable import PrettyTable
+import vtk
+from vtk.util import numpy_support
+
+def compare(a, b):
+  '''
+  '''
+
+  if os.path.splitext(a)[1].lower() == '.vtp' and \
+     os.path.splitext(b)[1].lower() == '.vtp':
+
+    sizeA = os.path.getsize(a)
+    sizeB = os.path.getsize(b)
+
+    poly_a = TKO.Util.loadvtp(a)
+    poly_b = TKO.Util.loadvtp(b)
+
+    x = PrettyTable()
+    x.field_names = ['File', 'Bytes', 'Streamlines']
+    x.add_row([os.path.basename(a), str(sizeA), str(poly_a['number_of_streamlines'])])
+    x.add_row([os.path.basename(b), str(sizeB), str(poly_b['number_of_streamlines'])])
+    print(x)
+
+    x = PrettyTable()
+    x.field_names = ["Geometry", "Min. Delta", "Max. Delta", "Mean. Delta", "StdDev."]
+
+
+    (min_a, max_a, mean_a, std_a), dist_a = TKO.Util.error(poly_a['points'], poly_b['points'])
+    x.add_row(["XYZ Points", min_a, max_a, mean_a, std_a])
+
+    (min_a, max_a, mean_a, std_a), dist_a = TKO.Util.error(poly_a['lines'], poly_b['lines'])
+    x.add_row(["Line Indices", min_a, max_a, mean_a, std_a])
+
+    print(x)
+
+    x = PrettyTable()
+    x.field_names = ["Scalars", "Min. Delta", "Max. Delta", "Mean. Delta", "StdDev."]
+
+    for i,s in enumerate(poly_a['scalar_names']):
+      (min_a, max_a, mean_a, std_a), dist_a = TKO.Util.error(poly_a['scalars'][i], poly_b['scalars'][i])
+      x.add_row([s, np.round(min_a,6), np.round(max_a,6), np.round(mean_a,6), np.round(std_a,6)])
+
+    print(x)
+
+    x = PrettyTable()
+    x.field_names = ["Properties", "Min. Delta", "Max. Delta", "Mean. Delta", "StdDev."]
+
+    x.add_row(['Not supported yet.','','','',''])
+    # for i,s in enumerate(poly_a['property_names']):
+    #   (min_a, max_a, mean_a, std_a), dist_a = TKO.Util.error(poly_a['properties'][i], poly_b['properties'][i])
+    #   x.add_row([s, np.round(min_a,6), np.round(max_a,6), np.round(mean_a,6), np.round(std_a,6)])
+
+    print(x)
+
+
+  else:
+    print('ERROR: Only .vtp files are currently supported.')
+    sys.exit(2)
+
+
+
+if __name__ == "__main__":
+
+  parser = argparse.ArgumentParser(description='T R A K O: Compare two streamline files.')
+  parser.add_argument('-a', help='Streamline file A (.vtp)', required=True)
+  parser.add_argument('-b', help='Streamline file B (.tko)', required=True)
+
+  args = parser.parse_args()
+
+  print()
+  print('>> T R A K O - Comparison')
+  print()
+
+  compare(args.a, args.b)
+
+  print()
+  print(' (x_x) tko-ed.')
+  print()
