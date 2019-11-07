@@ -45,7 +45,7 @@ vtkNumberOfComponents_to_gltfType = {
 
 
 
-def convert(input, output=None):
+def convert(input, config=None):
 
   r = vtk.vtkXMLPolyDataReader()
   r.SetFileName(input)
@@ -61,7 +61,7 @@ def convert(input, output=None):
   #
   pointdata = polydata.GetPointData()
   number_of_scalars = pointdata.GetNumberOfArrays()
-  scalars = []#np.zeros((points.shape[0], number_of_scalars))
+  scalars = []
   scalar_types = []
   scalar_names = []
 
@@ -75,9 +75,31 @@ def convert(input, output=None):
 
       scalar_types.append((data_type, number_of_components))
 
-      print('Loading per vertex data', arr_name)
-      # scalars[:, i] = numpy_support.vtk_to_numpy(arr)
+      print('Loading scalar', arr_name)
       scalars.append(numpy_support.vtk_to_numpy(arr))
+
+
+  #
+  # properties are per streamline
+  #
+  celldata = polydata.GetCellData()
+  number_of_properties = celldata.GetNumberOfArrays()
+  properties = []
+  property_types = []
+  property_names = []
+
+  for i in range(number_of_properties):
+      arr_name = celldata.GetArrayName(i)
+      property_names.append(str(arr_name))
+      arr = celldata.GetArray(i)
+
+      number_of_components = arr.GetNumberOfComponents()
+      data_type = arr.GetDataType()
+
+      property_types.append((data_type, number_of_components))
+
+      print('Loading property', arr_name)
+      properties.append(numpy_support.vtk_to_numpy(arr))
 
 
   #
@@ -156,7 +178,10 @@ def convert(input, output=None):
   return fibercluster
 
 
-def fibercluster2gltf(fibercluster, draco=False):
+def fibercluster2gltf(fibercluster, draco=False, config=None):
+
+  if config and draco:
+    print('Using custom configuration for Draco.')
 
   gltf = GLTF2()
   scene = Scene()
@@ -237,13 +262,35 @@ def fibercluster2gltf(fibercluster, draco=False):
             bounds[0][i] = min(float(bounds[0][i]), float(v))
             bounds[1][i] = max(float(bounds[1][i]), float(v))
 
-      # compress the chunks
-      position = False
-      if (attributename == 'POSITION'):
-        position = True
+      if config:
 
-      chunk = DracoPy.encode_point_cloud_to_buffer(data.ravel(), position=position, sequential=True, 
-        quantization_bits=14, create_metadata=True)
+        if attributename in config:
+
+          position = config[attributename]['position']
+          sequential = config[attributename]['sequential']
+          qb = config[attributename]['quantization_bits']
+          cl = config[attributename]['compression_level']
+          qrange = config[attributename]['quantization_range']
+          qorigin = config[attributename]['quantization_origin']
+
+          print ('Custom config for', attributename)
+
+      else:
+
+        # compress the chunks
+        position = False
+        if (attributename == 'POSITION'):
+          position = True
+
+        sequential = True
+        qb=14
+        cl=1
+        qrange=-1
+        qorigin=None
+
+
+      chunk = DracoPy.encode_point_cloud_to_buffer(data.ravel(), position=position, sequential=sequential, 
+        quantization_bits=qb, compression_level=cl, quantization_range=qrange, quantization_origin=qorigin)
 
     else:
 
@@ -317,8 +364,33 @@ def fibercluster2gltf(fibercluster, draco=False):
           bounds[0][i] = min(int(bounds[0][i]), int(v))
           bounds[1][i] = max(int(bounds[1][i]), int(v))
 
+    if config:
+
+      if 'INDICES' in config:
+
+        attributename = 'INDICES'
+
+        position = config[attributename]['position']
+        sequential = config[attributename]['sequential']
+        qb = config[attributename]['quantization_bits']
+        cl = config[attributename]['compression_level']
+        qrange = config[attributename]['quantization_range']
+        qorigin = config[attributename]['quantization_origin']
+
+        print ('Custom config for', attributename)
+
+    else:
+
+      position = False
+      sequential = True
+      qb=14
+      cl=1
+      qrange=-1
+      qorigin=None
+
+
     chunk = DracoPy.encode_point_cloud_to_buffer(indices, position=False, sequential=True, 
-        quantization_bits=14, create_metadata=True)
+        quantization_bits=qb, compression_level=cl, quantization_range=qrange, quantization_origin=qorigin)
 
   else:
 
@@ -354,6 +426,7 @@ def fibercluster2gltf(fibercluster, draco=False):
   # print(len(chunk), len(indices))
 
   primitive.indices = len(accessors) # again, last one!
+  primitive._custom1 = 1223
 
   accessor = Accessor()
   # print(accessor)
@@ -401,119 +474,3 @@ def fibercluster2gltf(fibercluster, draco=False):
 
   return gltf
 
-
-
-
-  for s in range(fibercluster['number_of_streamlines']):
-    # print(s)
-    # print('-'*8)
-    primitive = Primitive()
-
-    for attributeindex,attributename in enumerate(custom_attributes.keys()):
-      # we need to update the indices increasingly
-      # print('before', s, custom_attributes[attributename])
-      custom_attributes[attributename] = (s*len(custom_attributes.keys())+attributeindex)
-      # print('after', custom_attributes[attributename])
-
-    primitive.attributes = Attributes(**custom_attributes)
-    primitive.mode = 1 # LINES
-
-    byteOffset = 0
-
-    for attributeindex,attributename in enumerate(fibercluster['per_vertex_data'].keys()):
-
-      # print('Parsing', attributename)
-
-      componentType = fibercluster['per_vertex_data'][attributename]['componentType']
-      aType = fibercluster['per_vertex_data'][attributename]['type']
-      data_per_streamline = fibercluster['per_vertex_data'][attributename]['data'][s]
-
-      if componentType == pygltflib.FLOAT:
-        asciiType = 'f'
-      else:
-        asciiType = 'f'
-        print('Type not supported!')
-
-      #
-      # create bytestream for buffer
-      #
-      chunk = b""
-      bounds = (None, None) # min,max
-      for index, values in enumerate(data_per_streamline):
-
-        
-        if not type(values) is np.ndarray:
-          values = [values]
-
-        if chunk == b"":
-          # first loop run
-          bounds = (list(values), list(values))
-        else:
-          for i,v in enumerate(values):       
-            bounds[0][i] = min(float(bounds[0][i]), float(v))
-            bounds[1][i] = max(float(bounds[1][i]), float(v))
-
-
-        pack = "<" + (asciiType*len(values))
-
-        subChunk = struct.pack(pack, *values)
-        chunk += subChunk
-
-      
-      # print('added', attributename, chunkers[attributename])
-      # print (len(data_per_streamline))
-
-      # each attribute has a bufferview for each streamline
-      # and an accessor
-      bufferview = BufferView()
-      bufferview.target = ARRAY_BUFFER
-      # print(buffers.keys())
-      bufferview.buffer = attributeindex
-      bufferview.byteOffset = len(chunkers[attributename])##byteOffset 
-      bufferview.byteLength = len(chunk) 
-      bufferviews.append(bufferview)
-
-      # print(len(chunkers[attributename]))
-
-      chunkers[attributename] += chunk
-
-      byteOffset += len(chunk)
-
-
-      accessor = Accessor()
-      # print(accessor)
-      accessor.bufferView = len(bufferviews)-1
-      accessor.byteOffset = 0#byteOffset
-      accessor.componentType = componentType
-      accessor.count = len(data_per_streamline)
-      accessor.type = aType
-      accessor.min = list(bounds[0])
-      accessor.max = list(bounds[1])
-      accessors.append(accessor)
-
-    # add this streamline to the mesh
-    mesh.primitives.append(primitive)
-
-  # now add the mesh to the scene
-  gltf.meshes.append(mesh)
-  gltf.nodes.append(node)
-
-  # add the bufferviews and the accessors
-  gltf.bufferViews += bufferviews
-  gltf.accessors += accessors
-
-  #
-  # store all buffer data base64-encoded
-  #
-  for attributename in fibercluster['per_vertex_data'].keys():
-
-    buffer = buffers[attributename]
-    chunker = chunkers[attributename]
-
-    buffer.uri = pygltflib.DATA_URI_HEADER
-    buffer.uri += str(base64.b64encode(chunker), "utf-8")
-    buffer.byteLength = len(chunker)
-
-    gltf.buffers.append(buffer)
-
-  return gltf
