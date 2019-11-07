@@ -1,4 +1,4 @@
 #!/bin/bash
-./trakofy.py -i example.vtp -o example.tko
-./untrakofy.py -i example.tko -o restored.vtp
-./compare.py -a example.vtp -b restored.vtp
+./trakofy.py -i DATA/example.vtp -o DATA/example.tko
+./untrakofy.py -i DATA/example.tko -o DATA/restored.vtp
+./compare.py -a DATA/example.vtp -b DATA/restored.vtp
