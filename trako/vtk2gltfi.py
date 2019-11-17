@@ -146,7 +146,8 @@ def convert(input, config=None):
 
     'number_of_streamlines': number_of_streamlines,
     'per_vertex_data': collections.OrderedDict(),
-    'indices': lines_just_length#ordered_indices
+    'indices': lines_just_length, #ordered_indices
+    'per_streamline_data': collections.OrderedDict()
 
   }
 
@@ -170,6 +171,25 @@ def convert(input, config=None):
       gltfType = vtknumberofcomponents
 
     fibercluster['per_vertex_data'][s] = {
+      'componentType': vtkDataType_to_gltfComponentType[vtkdatatype],
+      'type': gltfType,
+      'data': thisdata
+    }
+
+  for i,p in enumerate(property_names):
+
+    vtkdatatype = property_types[i][0]
+    vtknumberofcomponents = property_types[i][1]
+
+    thisdata = properties[i]#[]
+
+    if vtknumberofcomponents in vtkNumberOfComponents_to_gltfType:
+      gltfType = vtkNumberOfComponents_to_gltfType[vtknumberofcomponents]
+    else:
+      # for now, we will just pass it through
+      gltfType = vtknumberofcomponents
+
+    fibercluster['per_streamline_data'][p] = {
       'componentType': vtkDataType_to_gltfComponentType[vtkdatatype],
       'type': gltfType,
       'data': thisdata
@@ -203,6 +223,19 @@ def fibercluster2gltf(fibercluster, draco=False, config=None):
   bufferviews = []
   # and a bunch of accessors
   accessors = []
+
+  # we need stuff for properties as well
+  p_buffers = collections.OrderedDict()
+  for p_name in fibercluster['per_streamline_data'].keys():
+    p_buffers[p_name] = Buffer()
+  p_chunkers = collections.OrderedDict()
+  for p_name in fibercluster['per_streamline_data'].keys():
+    p_chunkers[p_name] = b""
+
+  # and a bunch of bufferviews
+  p_bufferviews = []
+  # and a bunch of accessors
+  p_accessors = []
 
   node = Node() # one fiber cluster has a node
   mesh = Mesh() # .. and a mesh
@@ -389,7 +422,7 @@ def fibercluster2gltf(fibercluster, draco=False, config=None):
       qorigin=None
 
 
-    chunk = DracoPy.encode_point_cloud_to_buffer(indices, position=False, sequential=True, 
+    i_chunk = DracoPy.encode_point_cloud_to_buffer(indices, position=False, sequential=True, 
         quantization_bits=qb, compression_level=cl, quantization_range=qrange, quantization_origin=qorigin)
 
   else:
@@ -397,13 +430,13 @@ def fibercluster2gltf(fibercluster, draco=False, config=None):
     #
     # create bytestream for index buffer
     #
-    chunk = b""
+    i_chunk = b""
     bounds = (None, None) # min,max
     for index, values in enumerate(indices):
 
       values = [values]
 
-      if chunk == b"":
+      if i_chunk == b"":
         # first loop run
         bounds = (list(values), list(values))
       else:
@@ -414,19 +447,18 @@ def fibercluster2gltf(fibercluster, draco=False, config=None):
       pack = "<" + ('H'*len(values))
 
       subChunk = struct.pack(pack, *values)
-      chunk += subChunk
+      i_chunk += subChunk
 
 
   bufferview = BufferView()
   bufferview.target = ELEMENT_ARRAY_BUFFER
-  bufferview.buffer = attributeindex+1 # this is last buffer
+  bufferview.buffer = attributeindex+1 # this is last buffer.. for now only -> properties below
   bufferview.byteOffset = 0
   bufferview.byteLength = len(chunk)
 
   # print(len(chunk), len(indices))
 
-  primitive.indices = len(accessors) # again, last one!
-  primitive._custom1 = 1223
+  primitive.indices = len(accessors) # again, NOT last one!
 
   accessor = Accessor()
   # print(accessor)
@@ -439,6 +471,134 @@ def fibercluster2gltf(fibercluster, draco=False, config=None):
   accessor.max = list(bounds[1])
 
 
+  #
+  # properties
+  # 
+  properties = {} # this will later hold our accessor id's for the property data
+  for p_index,p_name in enumerate(fibercluster['per_streamline_data'].keys()):
+
+    # print('Parsing', p_name)
+
+    componentType = fibercluster['per_streamline_data'][p_name]['componentType']
+    aType = fibercluster['per_streamline_data'][p_name]['type']
+    data = fibercluster['per_streamline_data'][p_name]['data']
+
+    if componentType == pygltflib.FLOAT:
+      asciiType = 'f'
+
+    elif componentType == pygltflib.UNSIGNED_INT:
+      asciiType = 'I'
+
+    elif componentType == pygltflib.UNSIGNED_BYTE:
+      asciiType = 'B'
+
+    else:
+      asciiType = 'f'
+      print('Type not supported!', componentType)
+
+    if draco:
+
+      for index, values in enumerate(data):
+
+        
+        if not type(values) is np.ndarray:
+          values = [values]
+
+        if index == 0:
+          # first loop run
+          bounds = (list(values), list(values))
+        else:
+          for i,v in enumerate(values):       
+            bounds[0][i] = min(float(bounds[0][i]), float(v))
+            bounds[1][i] = max(float(bounds[1][i]), float(v))
+
+      if config:
+
+        if p_name in config:
+
+          position = config[p_name]['position']
+          sequential = config[p_name]['sequential']
+          qb = config[p_name]['quantization_bits']
+          cl = config[p_name]['compression_level']
+          qrange = config[p_name]['quantization_range']
+          qorigin = config[p_name]['quantization_origin']
+
+          print ('Custom config for', p_name)
+
+      else:
+
+        # compress the chunks
+        position = False
+        sequential = True
+        qb=14
+        cl=1
+        qrange=-1
+        qorigin=None
+
+
+      chunk = DracoPy.encode_point_cloud_to_buffer(data.ravel(), position=position, sequential=sequential, 
+        quantization_bits=qb, compression_level=cl, quantization_range=qrange, quantization_origin=qorigin)
+
+    else:
+
+      #
+      # create bytestream for buffer
+      #
+      chunk = b""
+      bounds = (None, None) # min,max
+      for index, values in enumerate(data):
+
+        
+        if not type(values) is np.ndarray:
+          values = [values]
+
+        if chunk == b"":
+          # first loop run
+          bounds = (list(values), list(values))
+        else:
+          for i,v in enumerate(values):       
+            bounds[0][i] = min(float(bounds[0][i]), float(v))
+            bounds[1][i] = max(float(bounds[1][i]), float(v))
+
+        pack = "<" + (asciiType*len(values))
+
+        subChunk = struct.pack(pack, *values)
+        chunk += subChunk
+
+
+    # we need bufferview
+    # and an accessor
+    p_bufferview = BufferView()
+    p_bufferview.target = ARRAY_BUFFER
+    # print(buffers.keys())
+    p_bufferview.buffer = attributeindex+1+p_index+1 # first scalars, then indices, then properties
+    p_bufferview.byteOffset = 0#len(chunkers[attributename])##byteOffset 
+    p_bufferview.byteLength = len(chunk) 
+    p_bufferviews.append(p_bufferview)
+
+    # print(len(chunkers[attributename]))
+
+    p_chunkers[p_name] += chunk
+
+    # byteOffset += len(chunk)
+
+
+    p_accessor = Accessor()
+    # print(accessor)
+    p_accessor.bufferView = len(bufferviews) + len(p_bufferviews)
+    p_accessor.byteOffset = 0#byteOffset
+    p_accessor.componentType = componentType
+    p_accessor.count = len(data)
+    p_accessor.type = aType
+    p_accessor.min = list(bounds[0])
+    p_accessor.max = list(bounds[1])
+    p_accessors.append(p_accessor)
+
+    properties[p_name] = len(accessors) + len(p_accessors)
+
+
+  primitive.extras = {'properties': properties}
+
   # add this streamline to the mesh
   mesh.primitives.append(primitive)
 
@@ -447,8 +607,8 @@ def fibercluster2gltf(fibercluster, draco=False, config=None):
   gltf.nodes.append(node)
 
   # add the bufferviews and the accessors
-  gltf.bufferViews += bufferviews + [bufferview]
-  gltf.accessors += accessors + [accessor]
+  gltf.bufferViews += bufferviews + [bufferview] + p_bufferviews # per vertex, indices, per streamline
+  gltf.accessors += accessors + [accessor] + p_accessors
 
   #
   # store all buffer data base64-encoded
@@ -468,9 +628,22 @@ def fibercluster2gltf(fibercluster, draco=False, config=None):
   # and now for the indices
   indexbuffer = Buffer()
   indexbuffer.uri = pygltflib.DATA_URI_HEADER
-  indexbuffer.uri += str(base64.b64encode(chunk), "utf-8")
-  indexbuffer.byteLength = len(chunk)
+  indexbuffer.uri += str(base64.b64encode(i_chunk), "utf-8")
+  indexbuffer.byteLength = len(i_chunk)
   gltf.buffers.append(indexbuffer)
+
+  # and now for the properties
+  for p_name in fibercluster['per_streamline_data'].keys():
+
+    buffer = p_buffers[p_name]
+    chunker = p_chunkers[p_name]
+
+    buffer.uri = pygltflib.DATA_URI_HEADER
+    buffer.uri += str(base64.b64encode(chunker), "utf-8")
+    buffer.byteLength = len(chunker)
+
+    gltf.buffers.append(buffer)
+
 
   return gltf
 

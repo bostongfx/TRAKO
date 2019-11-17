@@ -65,6 +65,9 @@ def convert(input, output=None):
   # get all attributes
   attributes = gltf.meshes[0].primitives[0].attributes
 
+  # get all properties
+  properties = gltf.meshes[0].primitives[0].extras['properties']
+
   polydata = vtk.vtkPolyData()
 
   #
@@ -142,7 +145,7 @@ def convert(input, output=None):
       vtkArr.SetName(scalarname)
       polydata.GetPointData().AddArray(vtkArr)
 
-      print('Restored', scalarname)
+      print('Restored scalar', scalarname)
 
   #
   #
@@ -190,6 +193,50 @@ def convert(input, output=None):
   cellArray.SetCells(len(indices),numpy_support.numpy_to_vtkIdTypeArray(np.array(celldata)))
 
   polydata.SetLines(cellArray)
+
+
+  ### now the properties
+
+  for k,v in properties.items():
+
+    if v:
+      # valid property
+
+      # grab accessor
+      accessor = gltf.accessors[v]
+
+      # grab bufferview
+      bufferview = accessor.bufferView
+
+      # grab buffer
+      data = gltf.buffers[gltf.bufferViews[bufferview].buffer]
+
+      # unpack data
+      magic = 'data:application/octet-stream;base64,'
+      bytes = base64.b64decode(data.uri[len(magic):])
+
+      if bytes[0:5] != b'DRACO':
+        print('Did not find Draco compressed data..')
+
+      draco_points = DracoPy.decode_point_cloud_buffer(bytes).points
+
+      if accessor.type in gltfType_to_vtkNumberOfComponents:
+        number_of_elements = gltfType_to_vtkNumberOfComponents[accessor.type]
+      else:
+        # work around
+        number_of_elements = accessor.type
+
+      datatype = gltfComponentType_to_npDataType[accessor.componentType]
+      draco_points_reshaped = np.array(draco_points, dtype=datatype).reshape(int(len(draco_points)/number_of_elements), number_of_elements)
+    
+
+      p_name = k
+      vtkArr = numpy_support.numpy_to_vtk(draco_points_reshaped)
+      vtkArr.SetName(p_name)
+      polydata.GetCellData().AddArray(vtkArr)
+
+      print('Restored property', p_name)
+
 
   return polydata
 

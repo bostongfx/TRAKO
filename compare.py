@@ -49,10 +49,10 @@ def compare(a, b):
     x = PrettyTable()
     x.field_names = ["Properties", "Min. Delta", "Max. Delta", "Mean. Delta", "StdDev."]
 
-    x.add_row(['Not supported yet.','','','',''])
-    # for i,s in enumerate(poly_a['property_names']):
-    #   (min_a, max_a, mean_a, std_a), dist_a = TKO.Util.error(poly_a['properties'][i], poly_b['properties'][i])
-    #   x.add_row([s, np.round(min_a,6), np.round(max_a,6), np.round(mean_a,6), np.round(std_a,6)])
+    # x.add_row(['Not supported yet.','','','',''])
+    for i,s in enumerate(poly_a['property_names']):
+      (min_a, max_a, mean_a, std_a), dist_a = TKO.Util.error(poly_a['properties'][i], poly_b['properties'][i])
+      x.add_row([s, np.round(min_a,6), np.round(max_a,6), np.round(mean_a,6), np.round(std_a,6)])
 
     print(x)
 
