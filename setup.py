@@ -19,6 +19,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
+    setup_requires=['scikit-build>=0.10.0'],
     install_requires=[
         'cycler>=0.10.0',
         'dataclasses>=0.6',
@@ -34,10 +35,9 @@ setuptools.setup(
         'pygltflib>=1.11.10',
         'pyparsing>=2.4.5',
         'python-dateutil>=2.8.1',
-        'scikit-build>=0.10.0',
         'six>=1.13.0',
         'stringcase>=1.2.0',
-        'TrakoDracoPy>=0.0.13.dev9',
+        'TrakoDracoPy>=0.0.13b0.dev9',
         'typing-extensions>=3.7.4.1',
         'typing-inspect>=0.5.0',
         'vtk>=8.1.2'
