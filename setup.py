@@ -37,7 +37,7 @@ setuptools.setup(
         'python-dateutil>=2.8.1',
         'six>=1.13.0',
         'stringcase>=1.2.0',
-        'TrakoDracoPy>=0.0.13b0.dev9',
+        'TrakoDracoPy',
         'typing-extensions>=3.7.4.1',
         'typing-inspect>=0.5.0',
         'vtk>=8.1.2'
