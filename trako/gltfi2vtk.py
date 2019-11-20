@@ -1,7 +1,7 @@
 import pygltflib
 from pygltflib import *
 
-import DracoPy
+import TrakoDracoPy
 
 import vtk
 from vtk.util import numpy_support
@@ -90,7 +90,7 @@ def convert(input, output=None):
   if bytes[0:5] != b'DRACO':
     print('Did not find Draco compressed data..')
 
-  draco_points = DracoPy.decode_point_cloud_buffer(bytes).points
+  draco_points = TrakoDracoPy.decode_point_cloud_buffer(bytes).points
 
   if accessor.type in gltfType_to_vtkNumberOfComponents:
     number_of_elements = gltfType_to_vtkNumberOfComponents[accessor.type]
@@ -128,7 +128,7 @@ def convert(input, output=None):
       if bytes[0:5] != b'DRACO':
         print('Did not find Draco compressed data..')
 
-      draco_points = DracoPy.decode_point_cloud_buffer(bytes).points
+      draco_points = TrakoDracoPy.decode_point_cloud_buffer(bytes).points
 
       if accessor.type in gltfType_to_vtkNumberOfComponents:
         number_of_elements = gltfType_to_vtkNumberOfComponents[accessor.type]
@@ -170,7 +170,7 @@ def convert(input, output=None):
   if bytes[0:5] != b'DRACO':
     print('Did not find Draco compressed data..')
 
-  draco_points = DracoPy.decode_point_cloud_buffer(bytes).points
+  draco_points = TrakoDracoPy.decode_point_cloud_buffer(bytes).points
 
   # make ints...
   indices = np.round(draco_points).astype(np.int)
@@ -218,7 +218,7 @@ def convert(input, output=None):
       if bytes[0:5] != b'DRACO':
         print('Did not find Draco compressed data..')
 
-      draco_points = DracoPy.decode_point_cloud_buffer(bytes).points
+      draco_points = TrakoDracoPy.decode_point_cloud_buffer(bytes).points
 
       if accessor.type in gltfType_to_vtkNumberOfComponents:
         number_of_elements = gltfType_to_vtkNumberOfComponents[accessor.type]

@@ -1,7 +1,7 @@
 import pygltflib
 from pygltflib import *
 
-import DracoPy
+import TrakoDracoPy
 
 import vtk
 from vtk.util import numpy_support
@@ -322,7 +322,7 @@ def fibercluster2gltf(fibercluster, draco=False, config=None):
         qorigin=None
 
 
-      chunk = DracoPy.encode_point_cloud_to_buffer(data.ravel(), position=position, sequential=sequential, 
+      chunk = TrakoDracoPy.encode_point_cloud_to_buffer(data.ravel(), position=position, sequential=sequential, 
         quantization_bits=qb, compression_level=cl, quantization_range=qrange, quantization_origin=qorigin)
 
     else:
@@ -422,7 +422,7 @@ def fibercluster2gltf(fibercluster, draco=False, config=None):
       qorigin=None
 
 
-    i_chunk = DracoPy.encode_point_cloud_to_buffer(indices, position=False, sequential=True, 
+    i_chunk = TrakoDracoPy.encode_point_cloud_to_buffer(indices, position=False, sequential=True, 
         quantization_bits=qb, compression_level=cl, quantization_range=qrange, quantization_origin=qorigin)
 
   else:
@@ -536,7 +536,7 @@ def fibercluster2gltf(fibercluster, draco=False, config=None):
         qorigin=None
 
 
-      chunk = DracoPy.encode_point_cloud_to_buffer(data.ravel(), position=position, sequential=sequential, 
+      chunk = TrakoDracoPy.encode_point_cloud_to_buffer(data.ravel(), position=position, sequential=sequential, 
         quantization_bits=qb, compression_level=cl, quantization_range=qrange, quantization_origin=qorigin)
 
     else:
