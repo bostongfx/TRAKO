@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="trako", 
-    version="0.2.1.dev9",
+    version="0.2.2.dev9",
     author="Daniel Haehn",
     author_email="haehn@mpsych.org",
     description="The TRAKO Project: Compression of DTI Streamlines.",
@@ -20,6 +20,7 @@ setuptools.setup(
     ],
     python_requires='>=3.6',
     setup_requires=['scikit-build>=0.10.0'],
+    scripts=['trakofy','untrakofy','tkompare'],
     install_requires=[
         'cycler>=0.10.0',
         'dataclasses>=0.6',
