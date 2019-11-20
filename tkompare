@@ -67,7 +67,7 @@ if __name__ == "__main__":
 
   parser = argparse.ArgumentParser(description='T R A K O: Compare two streamline files.')
   parser.add_argument('-a', help='Streamline file A (.vtp)', required=True)
-  parser.add_argument('-b', help='Streamline file B (.tko)', required=True)
+  parser.add_argument('-b', help='Streamline file B (.vtp)', required=True)
 
   args = parser.parse_args()
 
