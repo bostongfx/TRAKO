@@ -1,6 +1,11 @@
 # TRAKO
 
-## Installation as PyPI package coming soon!
+Trako compresses DTI streamlines from .vtp to smaller .tko files!
+
+## Installation as PyPI package (recommended, preferably in a virtualenv)
+
+`pip install trako`
+
 
 ## Manual installation
 

@@ -4,8 +4,8 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="trako", # Replace with your own username
-    version="0.2.dev9",
+    name="trako", 
+    version="0.2.1.dev9",
     author="Daniel Haehn",
     author_email="haehn@mpsych.org",
     description="The TRAKO Project: Compression of DTI Streamlines.",
