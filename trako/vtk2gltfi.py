@@ -7,6 +7,7 @@ import vtk
 from vtk.util import numpy_support
 
 import numpy as np
+import os
 
 import collections
 
@@ -47,10 +48,27 @@ vtkNumberOfComponents_to_gltfType = {
 
 def convert(input, config=None):
 
-  r = vtk.vtkXMLPolyDataReader()
-  r.SetFileName(input)
-  r.Update()
-  polydata = r.GetOutput()
+  extension = os.path.splitext(input)[1].lower()
+
+  if extension == '.vtp':
+
+    r = vtk.vtkXMLPolyDataReader()
+    r.SetFileName(input)
+    r.Update()
+    polydata = r.GetOutput()
+
+  elif extension == '.vtk':
+
+    r = vtk.vtkPolyDataReader()
+    r.SetFileName(input)
+    r.Update()
+    polydata = r.GetOutput()
+
+  else:
+
+    raise Error('Invalid input format.')
+
+
 
   points = numpy_support.vtk_to_numpy(polydata.GetPoints().GetData())
   lines = numpy_support.vtk_to_numpy(polydata.GetLines().GetData())
@@ -77,7 +95,7 @@ def convert(input, config=None):
 
       print('Loading scalar', arr_name)
       scalars.append(numpy_support.vtk_to_numpy(arr))
-
+      print('Loaded.')
 
   #
   # properties are per streamline
@@ -114,6 +132,8 @@ def convert(input, config=None):
 
   lines_just_length = []
 
+  print('Starting streamline loop')
+
   while (line_index<number_of_streamlines):
 
       lines_just_length.append(line_length)
@@ -138,6 +158,8 @@ def convert(input, config=None):
       if line_index < number_of_streamlines:
           line_length = lines[i+line_index]
 
+
+  print('done loop')
 
   #
   # now, create fiber cluster data structure
@@ -263,7 +285,7 @@ def fibercluster2gltf(fibercluster, draco=False, config=None):
 
   for attributeindex,attributename in enumerate(fibercluster['per_vertex_data'].keys()):
 
-    # print('Parsing', attributename)
+    print('Parsing', attributename)
 
     componentType = fibercluster['per_vertex_data'][attributename]['componentType']
     aType = fibercluster['per_vertex_data'][attributename]['type']
@@ -322,8 +344,10 @@ def fibercluster2gltf(fibercluster, draco=False, config=None):
         qorigin=None
 
 
+      print('draco')
       chunk = TrakoDracoPy.encode_point_cloud_to_buffer(data.ravel(), position=position, sequential=sequential, 
         quantization_bits=qb, compression_level=cl, quantization_range=qrange, quantization_origin=qorigin)
+      print('draco_end')
 
     else:
 
