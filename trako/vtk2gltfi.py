@@ -69,7 +69,6 @@ def convert(input, config=None, verbose=True):
     raise Error('Invalid input format.')
 
 
-
   points = numpy_support.vtk_to_numpy(polydata.GetPoints().GetData())
   lines = numpy_support.vtk_to_numpy(polydata.GetLines().GetData())
   number_of_streamlines = polydata.GetLines().GetNumberOfCells()
@@ -130,13 +129,16 @@ def convert(input, config=None, verbose=True):
   ordered_scalars = []
   i = 0
   current_fiber_id = 0
-  line_length = lines[i]
+  line_length = 0
+  # sanity check
+  if len(lines) > 0:
+    line_length = lines[i]
   line_index = 0
 
   lines_just_length = []
 
   if verbose:
-        print('Starting streamline loop')
+    print('Starting streamline loop')
 
   while (line_index<number_of_streamlines):
 
@@ -311,15 +313,15 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
 
     if draco:
 
+      bounds = ([0],[0])
       for index, values in enumerate(data):
 
-        
         if not type(values) is np.ndarray:
           values = [values]
 
         if index == 0:
           # first loop run
-          bounds = (list(values), list(values))
+          bounds = (list([float(v) for v in values]), list([float(v) for v in values]))
         else:
           for i,v in enumerate(values):       
             bounds[0][i] = min(float(bounds[0][i]), float(v))
@@ -355,8 +357,17 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
 
       if verbose:
         print('draco')
-      chunk = TrakoDracoPy.encode_point_cloud_to_buffer(data.ravel(), position=position, sequential=sequential, 
-        quantization_bits=qb, compression_level=cl, quantization_range=qrange, quantization_origin=qorigin)
+
+      # fix nan
+      np.nan_to_num(data, copy=False)
+
+      if data.shape[0] == 0:
+        if verbose:
+          print('Scalar with length 0! Skipping..')
+        chunk = b""
+      else:
+        chunk = TrakoDracoPy.encode_point_cloud_to_buffer(data.ravel(), position=position, sequential=sequential, 
+          quantization_bits=qb, compression_level=cl, quantization_range=qrange, quantization_origin=qorigin)
       if verbose:
         print('draco_end')
 
@@ -375,7 +386,7 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
 
         if chunk == b"":
           # first loop run
-          bounds = (list(values), list(values))
+          bounds = (list([float(v) for v in values]), list([float(v) for v in values]))
         else:
           for i,v in enumerate(values):       
             bounds[0][i] = min(float(bounds[0][i]), float(v))
@@ -426,7 +437,7 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
 
       if chunk == b"":
         # first loop run
-        bounds = (list(values), list(values))
+        bounds = (list([int(v) for v in values]), list([int(v) for v in values]))
       else:
         for i,v in enumerate(values):       
           bounds[0][i] = min(int(bounds[0][i]), int(v))
@@ -458,7 +469,15 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
       qorigin=None
 
 
-    i_chunk = TrakoDracoPy.encode_point_cloud_to_buffer(indices, position=False, sequential=True, 
+    # fix nan
+    np.nan_to_num(indices, copy=False)
+
+    if len(indices) == 0:
+      if verbose:
+        print('Indices with length 0! Skipping..')
+      i_chunk = b""
+    else:
+      i_chunk = TrakoDracoPy.encode_point_cloud_to_buffer(indices, position=False, sequential=True, 
         quantization_bits=qb, compression_level=cl, quantization_range=qrange, quantization_origin=qorigin)
 
   else:
@@ -474,7 +493,7 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
 
       if i_chunk == b"":
         # first loop run
-        bounds = (list(values), list(values))
+        bounds = (list([float(v) for v in values]), list([float(v) for v in values]))
       else:
         for i,v in enumerate(values):       
           bounds[0][i] = min(int(bounds[0][i]), int(v))
@@ -513,7 +532,8 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
   properties = {} # this will later hold our accessor id's for the property data
   for p_index,p_name in enumerate(fibercluster['per_streamline_data'].keys()):
 
-    # print('Parsing', p_name)
+    if verbose:
+      print('Parsing', p_name)
 
     componentType = fibercluster['per_streamline_data'][p_name]['componentType']
     aType = fibercluster['per_streamline_data'][p_name]['type']
@@ -538,11 +558,11 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
 
         
         if not type(values) is np.ndarray:
-          values = [values]
+          values = [float(values)]
 
         if index == 0:
           # first loop run
-          bounds = (list(values), list(values))
+          bounds = (list([float(v) for v in values]), list([float(v) for v in values]))
         else:
           for i,v in enumerate(values):       
             bounds[0][i] = min(float(bounds[0][i]), float(v))
@@ -572,9 +592,17 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
         qrange=-1
         qorigin=None
 
+      np.nan_to_num(data, copy=False)
 
-      chunk = TrakoDracoPy.encode_point_cloud_to_buffer(data.ravel(), position=position, sequential=sequential, 
-        quantization_bits=qb, compression_level=cl, quantization_range=qrange, quantization_origin=qorigin)
+      # print(data.shape)
+
+      if data.shape[0] == 0:
+        if verbose:
+          print('Property with length 0! Skipping..')
+        chunk = b""
+      else:
+        chunk = TrakoDracoPy.encode_point_cloud_to_buffer(data.ravel(), position=position, sequential=sequential, 
+          quantization_bits=qb, compression_level=cl, quantization_range=qrange, quantization_origin=qorigin)
 
     else:
 
@@ -591,7 +619,7 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
 
         if chunk == b"":
           # first loop run
-          bounds = (list(values), list(values))
+          bounds = (list([float(v) for v in values]), list([float(v) for v in values]))
         else:
           for i,v in enumerate(values):       
             bounds[0][i] = min(float(bounds[0][i]), float(v))
@@ -619,7 +647,6 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
 
     # byteOffset += len(chunk)
 
-
     p_accessor = Accessor()
     # print(accessor)
     p_accessor.bufferView = len(bufferviews) + len(p_bufferviews)
@@ -630,6 +657,7 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
     p_accessor.min = list(bounds[0])
     p_accessor.max = list(bounds[1])
     p_accessors.append(p_accessor)
+
 
     properties[p_name] = len(accessors) + len(p_accessors)
 
