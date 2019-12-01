@@ -46,7 +46,7 @@ vtkNumberOfComponents_to_gltfType = {
 
 
 
-def convert(input, config=None):
+def convert(input, config=None, verbose=True):
 
   extension = os.path.splitext(input)[1].lower()
 
@@ -93,9 +93,11 @@ def convert(input, config=None):
 
       scalar_types.append((data_type, number_of_components))
 
-      print('Loading scalar', arr_name)
+      if verbose:
+        print('Loading scalar', arr_name)
       scalars.append(numpy_support.vtk_to_numpy(arr))
-      print('Loaded.')
+      if verbose:
+        print('Loaded.')
 
   #
   # properties are per streamline
@@ -116,7 +118,8 @@ def convert(input, config=None):
 
       property_types.append((data_type, number_of_components))
 
-      print('Loading property', arr_name)
+      if verbose:
+        print('Loading property', arr_name)
       properties.append(numpy_support.vtk_to_numpy(arr))
 
 
@@ -132,7 +135,8 @@ def convert(input, config=None):
 
   lines_just_length = []
 
-  print('Starting streamline loop')
+  if verbose:
+        print('Starting streamline loop')
 
   while (line_index<number_of_streamlines):
 
@@ -159,7 +163,8 @@ def convert(input, config=None):
           line_length = lines[i+line_index]
 
 
-  print('done loop')
+  if verbose:
+        print('done loop')
 
   #
   # now, create fiber cluster data structure
@@ -220,10 +225,11 @@ def convert(input, config=None):
   return fibercluster
 
 
-def fibercluster2gltf(fibercluster, draco=False, config=None):
+def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
 
   if config and draco:
-    print('Using custom configuration for Draco.')
+    if verbose:
+        print('Using custom configuration for Draco.')
 
   gltf = GLTF2()
   scene = Scene()
@@ -285,7 +291,8 @@ def fibercluster2gltf(fibercluster, draco=False, config=None):
 
   for attributeindex,attributename in enumerate(fibercluster['per_vertex_data'].keys()):
 
-    print('Parsing', attributename)
+    if verbose:
+        print('Parsing', attributename)
 
     componentType = fibercluster['per_vertex_data'][attributename]['componentType']
     aType = fibercluster['per_vertex_data'][attributename]['type']
@@ -299,7 +306,8 @@ def fibercluster2gltf(fibercluster, draco=False, config=None):
 
     else:
       asciiType = 'f'
-      print('Type not supported!', componentType)
+      if verbose:
+        print('Type not supported!', componentType)
 
     if draco:
 
@@ -328,7 +336,8 @@ def fibercluster2gltf(fibercluster, draco=False, config=None):
           qrange = config[attributename]['quantization_range']
           qorigin = config[attributename]['quantization_origin']
 
-          print ('Custom config for', attributename)
+          if verbose:
+            print ('Custom config for', attributename)
 
       else:
 
@@ -344,10 +353,12 @@ def fibercluster2gltf(fibercluster, draco=False, config=None):
         qorigin=None
 
 
-      print('draco')
+      if verbose:
+        print('draco')
       chunk = TrakoDracoPy.encode_point_cloud_to_buffer(data.ravel(), position=position, sequential=sequential, 
         quantization_bits=qb, compression_level=cl, quantization_range=qrange, quantization_origin=qorigin)
-      print('draco_end')
+      if verbose:
+        print('draco_end')
 
     else:
 
@@ -434,7 +445,8 @@ def fibercluster2gltf(fibercluster, draco=False, config=None):
         qrange = config[attributename]['quantization_range']
         qorigin = config[attributename]['quantization_origin']
 
-        print ('Custom config for', attributename)
+        if verbose:
+          print ('Custom config for', attributename)
 
     else:
 
@@ -547,7 +559,8 @@ def fibercluster2gltf(fibercluster, draco=False, config=None):
           qrange = config[p_name]['quantization_range']
           qorigin = config[p_name]['quantization_origin']
 
-          print ('Custom config for', p_name)
+          if verbose:
+            print ('Custom config for', p_name)
 
       else:
 
