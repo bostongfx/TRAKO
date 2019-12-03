@@ -58,7 +58,7 @@ gltfType_to_vtkNumberOfComponents = {
 
 }
 
-def convert(input, output=None):
+def convert(input, output=None, verbose=True):
 
   gltf = pygltflib.GLTF2.load_json(input)
 
@@ -66,7 +66,10 @@ def convert(input, output=None):
   attributes = gltf.meshes[0].primitives[0].attributes
 
   # get all properties
-  properties = gltf.meshes[0].primitives[0].extras['properties']
+  if 'properties' in gltf.meshes[0].primitives[0].extras:
+    properties = gltf.meshes[0].primitives[0].extras['properties']
+  else:
+    properties = {}
 
   polydata = vtk.vtkPolyData()
 
@@ -145,7 +148,8 @@ def convert(input, output=None):
       vtkArr.SetName(scalarname)
       polydata.GetPointData().AddArray(vtkArr)
 
-      print('Restored scalar', scalarname)
+      if verbose:
+        print('Restored scalar', scalarname)
 
   #
   #
@@ -235,7 +239,8 @@ def convert(input, output=None):
       vtkArr.SetName(p_name)
       polydata.GetCellData().AddArray(vtkArr)
 
-      print('Restored property', p_name)
+      if verbose:
+        print('Restored property', p_name)
 
 
   return polydata
