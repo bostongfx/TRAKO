@@ -69,6 +69,8 @@ def convert(input, config=None, verbose=True):
     raise Error('Invalid input format.')
 
 
+  # print(polydata.GetBounds())
+
   points = numpy_support.vtk_to_numpy(polydata.GetPoints().GetData())
   lines = numpy_support.vtk_to_numpy(polydata.GetLines().GetData())
   number_of_streamlines = polydata.GetLines().GetNumberOfCells()
@@ -87,6 +89,10 @@ def convert(input, config=None, verbose=True):
       scalar_names.append(str(arr_name))
       arr = pointdata.GetArray(i)
 
+      # arr.ComputeScalarRange()
+
+      # print(arr)
+
       number_of_components = arr.GetNumberOfComponents()
       data_type = arr.GetDataType()
 
@@ -95,8 +101,6 @@ def convert(input, config=None, verbose=True):
       if verbose:
         print('Loading scalar', arr_name)
       scalars.append(numpy_support.vtk_to_numpy(arr))
-      if verbose:
-        print('Loaded.')
 
   #
   # properties are per streamline
@@ -111,6 +115,8 @@ def convert(input, config=None, verbose=True):
       arr_name = celldata.GetArrayName(i)
       property_names.append(str(arr_name))
       arr = celldata.GetArray(i)
+
+      # print(i, arr)
 
       number_of_components = arr.GetNumberOfComponents()
       data_type = arr.GetDataType()
@@ -137,9 +143,6 @@ def convert(input, config=None, verbose=True):
 
   lines_just_length = []
 
-  if verbose:
-    print('Starting streamline loop')
-
   while (line_index<number_of_streamlines):
 
       lines_just_length.append(line_length)
@@ -163,10 +166,6 @@ def convert(input, config=None, verbose=True):
       line_index += 1
       if line_index < number_of_streamlines:
           line_length = lines[i+line_index]
-
-
-  if verbose:
-        print('done loop')
 
   #
   # now, create fiber cluster data structure
@@ -293,8 +292,8 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
 
   for attributeindex,attributename in enumerate(fibercluster['per_vertex_data'].keys()):
 
-    if verbose:
-        print('Parsing', attributename)
+    # if verbose:
+    #     print('Parsing', attributename)
 
     componentType = fibercluster['per_vertex_data'][attributename]['componentType']
     aType = fibercluster['per_vertex_data'][attributename]['type']
@@ -302,30 +301,41 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
 
     if componentType == pygltflib.FLOAT:
       asciiType = 'f'
+      npType = float
 
     elif componentType == pygltflib.UNSIGNED_INT:
       asciiType = 'I'
+      npType = int
 
     else:
       asciiType = 'f'
+      npType = float
       if verbose:
         print('Type not supported!', componentType)
 
     if draco:
 
-      bounds = ([0],[0])
-      for index, values in enumerate(data):
+      # bounds = ([0],[0])
+      # for index, values in enumerate(data):
 
-        if not type(values) is np.ndarray:
-          values = [values]
+      #   if not type(values) is np.ndarray:
+      #     values = [values]
 
-        if index == 0:
-          # first loop run
-          bounds = (list([float(v) for v in values]), list([float(v) for v in values]))
-        else:
-          for i,v in enumerate(values):       
-            bounds[0][i] = min(float(bounds[0][i]), float(v))
-            bounds[1][i] = max(float(bounds[1][i]), float(v))
+      #   if index == 0:
+      #     # first loop run
+      #     bounds = (list([float(v) for v in values]), list([float(v) for v in values]))
+      #   else:
+      #     for i,v in enumerate(values):       
+      #       bounds[0][i] = min(float(bounds[0][i]), float(v))
+      #       bounds[1][i] = max(float(bounds[1][i]), float(v))
+      bounds = [[],[]]
+      if data.ndim > 1:
+        for k in range(data.shape[1]):
+          bounds[0].append(npType(np.min(data[:,k])))
+          bounds[1].append(npType(np.max(data[:,k])))
+      else:
+        bounds = [[npType(np.min(data))], [npType(np.max(data))]]
+        
 
       if config:
 
@@ -354,10 +364,6 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
         qrange=-1
         qorigin=None
 
-
-      if verbose:
-        print('draco')
-
       # fix nan
       np.nan_to_num(data, copy=False)
 
@@ -368,29 +374,35 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
       else:
         chunk = TrakoDracoPy.encode_point_cloud_to_buffer(data.ravel(), position=position, sequential=sequential, 
           quantization_bits=qb, compression_level=cl, quantization_range=qrange, quantization_origin=qorigin)
-      if verbose:
-        print('draco_end')
 
     else:
+
+      bounds = [[],[]]
+      if data.ndim > 1:
+        for k in range(data.shape[1]):
+          bounds[0].append(npType(np.min(data[:,k])))
+          bounds[1].append(npType(np.max(data[:,k])))
+      else:
+        bounds = [[npType(np.min(data))], [npType(np.max(data))]]
 
       #
       # create bytestream for buffer
       #
       chunk = b""
-      bounds = (None, None) # min,max
+      # bounds = (None, None) # min,max
       for index, values in enumerate(data):
 
         
         if not type(values) is np.ndarray:
           values = [values]
 
-        if chunk == b"":
-          # first loop run
-          bounds = (list([float(v) for v in values]), list([float(v) for v in values]))
-        else:
-          for i,v in enumerate(values):       
-            bounds[0][i] = min(float(bounds[0][i]), float(v))
-            bounds[1][i] = max(float(bounds[1][i]), float(v))
+        # if chunk == b"":
+        #   # first loop run
+        #   bounds = (list([float(v) for v in values]), list([float(v) for v in values]))
+        # else:
+        #   for i,v in enumerate(values):       
+        #     bounds[0][i] = min(float(bounds[0][i]), float(v))
+        #     bounds[1][i] = max(float(bounds[1][i]), float(v))
 
         pack = "<" + (asciiType*len(values))
 
@@ -431,17 +443,26 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
 
   if draco:
 
-    for index, values in enumerate(indices):
+    # for index, values in enumerate(indices):
 
-      values = [values]
+    #   values = [values]
 
-      if chunk == b"":
-        # first loop run
-        bounds = (list([int(v) for v in values]), list([int(v) for v in values]))
-      else:
-        for i,v in enumerate(values):       
-          bounds[0][i] = min(int(bounds[0][i]), int(v))
-          bounds[1][i] = max(int(bounds[1][i]), int(v))
+    #   if chunk == b"":
+    #     # first loop run
+    #     bounds = (list([int(v) for v in values]), list([int(v) for v in values]))
+    #   else:
+    #     for i,v in enumerate(values):       
+    #       bounds[0][i] = min(int(bounds[0][i]), int(v))
+    #       bounds[1][i] = max(int(bounds[1][i]), int(v))
+
+    # bounds = [[],[]]
+    # if data.ndim > 1:
+    #   for k in range(data.shape[1]):
+    #     bounds[0].append(np.min(data[:,k]).astype(np.float))
+    #     bounds[1].append(np.max(data[:,k]).astype(np.float))
+    # else:
+    bounds = [[int(np.min(indices))], [int(np.max(indices))]]
+
 
     if config:
 
@@ -486,18 +507,20 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
     # create bytestream for index buffer
     #
     i_chunk = b""
-    bounds = (None, None) # min,max
+    # bounds = (None, None) # min,max
+    bounds = [[int(np.min(indices))], [int(np.max(indices))]]
+
     for index, values in enumerate(indices):
 
       values = [values]
 
-      if i_chunk == b"":
-        # first loop run
-        bounds = (list([float(v) for v in values]), list([float(v) for v in values]))
-      else:
-        for i,v in enumerate(values):       
-          bounds[0][i] = min(int(bounds[0][i]), int(v))
-          bounds[1][i] = max(int(bounds[1][i]), int(v))
+      # if i_chunk == b"":
+      #   # first loop run
+      #   bounds = (list([float(v) for v in values]), list([float(v) for v in values]))
+      # else:
+      #   for i,v in enumerate(values):       
+      #     bounds[0][i] = min(int(bounds[0][i]), int(v))
+      #     bounds[1][i] = max(int(bounds[1][i]), int(v))
 
       pack = "<" + ('H'*len(values))
 
@@ -532,41 +555,57 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
   properties = {} # this will later hold our accessor id's for the property data
   for p_index,p_name in enumerate(fibercluster['per_streamline_data'].keys()):
 
-    if verbose:
-      print('Parsing', p_name)
-
     componentType = fibercluster['per_streamline_data'][p_name]['componentType']
     aType = fibercluster['per_streamline_data'][p_name]['type']
     data = fibercluster['per_streamline_data'][p_name]['data']
 
     if componentType == pygltflib.FLOAT:
       asciiType = 'f'
+      npType = float
 
     elif componentType == pygltflib.UNSIGNED_INT:
       asciiType = 'I'
+      npType = int
 
     elif componentType == pygltflib.UNSIGNED_BYTE:
       asciiType = 'B'
+      npType = int
 
     else:
       asciiType = 'f'
+      npType = float
       print('Type not supported!', componentType)
 
     if draco:
 
-      for index, values in enumerate(data):
+      # print(data.shape)
+
+      bounds = [[],[]]
+      if data.ndim > 1:
+        for k in range(data.shape[1]):
+          bounds[0].append(npType(np.min(data[:,k])))
+          bounds[1].append(npType(np.max(data[:,k])))
+      else:
+        bounds = [[npType(np.min(data))], [npType(np.max(data))]]
+        
+
+      # for index, values in enumerate(data):
+      #   # print(index, values)
 
         
-        if not type(values) is np.ndarray:
-          values = [float(values)]
+      #   if not type(values) is np.ndarray:
+      #     values = [float(values)]
 
-        if index == 0:
-          # first loop run
-          bounds = (list([float(v) for v in values]), list([float(v) for v in values]))
-        else:
-          for i,v in enumerate(values):       
-            bounds[0][i] = min(float(bounds[0][i]), float(v))
-            bounds[1][i] = max(float(bounds[1][i]), float(v))
+      #   if index == 0:
+      #     # first loop run
+      #     bounds = (list([float(v) for v in values]), list([float(v) for v in values]))
+      #   else:
+      #     for i,v in enumerate(values):       
+      #       bounds[0][i] = min(float(bounds[0][i]), float(v))
+      #       bounds[1][i] = max(float(bounds[1][i]), float(v))
+
+      # print(bounds)
+      # print(bounds2)
 
       if config:
 
@@ -609,21 +648,30 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
       #
       # create bytestream for buffer
       #
+      bounds = [[],[]]
+      if data.ndim > 1:
+        for k in range(data.shape[1]):
+          bounds[0].append(npType(np.min(data[:,k])))
+          bounds[1].append(npType(np.max(data[:,k])))
+      else:
+        bounds = [[npType(np.min(data))], [npType(np.max(data))]]
+
+
       chunk = b""
-      bounds = (None, None) # min,max
+      # bounds = (None, None) # min,max
       for index, values in enumerate(data):
 
         
         if not type(values) is np.ndarray:
           values = [values]
 
-        if chunk == b"":
-          # first loop run
-          bounds = (list([float(v) for v in values]), list([float(v) for v in values]))
-        else:
-          for i,v in enumerate(values):       
-            bounds[0][i] = min(float(bounds[0][i]), float(v))
-            bounds[1][i] = max(float(bounds[1][i]), float(v))
+        # if chunk == b"":
+        #   # first loop run
+        #   bounds = (list([float(v) for v in values]), list([float(v) for v in values]))
+        # else:
+        #   for i,v in enumerate(values):       
+        #     bounds[0][i] = min(float(bounds[0][i]), float(v))
+        #     bounds[1][i] = max(float(bounds[1][i]), float(v))
 
         pack = "<" + (asciiType*len(values))
 
