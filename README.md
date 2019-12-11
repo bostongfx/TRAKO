@@ -1,6 +1,6 @@
 # TRAKO
 
-Trako compresses DTI streamlines from .vtp to smaller .tko files!
+**Trako compresses DTI streamlines from .vtp to smaller .tko files!**
 
 ## Installation as PyPI package (recommended, preferably in a virtualenv)
 
