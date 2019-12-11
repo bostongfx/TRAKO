@@ -10,8 +10,10 @@ def compare(a, b):
   '''
   '''
 
-  if os.path.splitext(a)[1].lower() == '.vtp' and \
-     os.path.splitext(b)[1].lower() == '.vtp':
+  if (os.path.splitext(a)[1].lower() == '.vtp' and \
+      os.path.splitext(b)[1].lower() == '.vtp') or \
+     (os.path.splitext(a)[1].lower() == '.vtk' and \
+      os.path.splitext(b)[1].lower() == '.vtk'):
 
     sizeA = os.path.getsize(a)
     sizeB = os.path.getsize(b)
@@ -58,7 +60,7 @@ def compare(a, b):
 
 
   else:
-    print('ERROR: Only .vtp files are currently supported.')
+    print('ERROR: Only .vtp and .vtk files are currently supported.')
     sys.exit(2)
 
 

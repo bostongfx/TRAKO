@@ -25,6 +25,34 @@ class Util:
     return (np.min(distances), np.max(distances), np.mean(distances), np.std(distances)), distances
 
   @staticmethod
+  def normalized_error(points1, points2, clusters=3):
+
+    distances = []
+
+    if clusters==3:
+
+      min_p1 = np.min(points1)
+      min_p2 = np.min(points2)
+      min_p = min(min_p1, min_p2)
+      max_p1 = np.max(points1)
+      max_p2 = np.max(points2)
+      max_p = max(max_p1, max_p2)
+
+      for i,p in enumerate(points1):
+
+        p1 = points1[i]
+        p2 = points2[i]
+
+        dist = np.linalg.norm(p1-p2)
+
+        dist /= (max_p - min_p)
+
+        distances.append(dist)
+
+    return (np.min(distances), np.max(distances), np.mean(distances), np.std(distances)), distances
+
+
+  @staticmethod
   def show_surroundings(points, index, window=3):
 
     start = max(0, index-window)
@@ -56,12 +84,26 @@ class Util:
 
 
   @staticmethod
-  def loadvtp(a):
+  def loadvtp(a, fromfile=True):
 
-    r = vtk.vtkXMLPolyDataReader()
-    r.SetFileName(a)
-    r.Update()
-    polydata = r.GetOutput()
+    if fromfile:
+
+      if a.endswith('vtp'):
+
+          r = vtk.vtkXMLPolyDataReader()
+          r.SetFileName(a)
+          r.Update()
+          polydata = r.GetOutput()
+
+      elif a.endswith('vtk'):
+
+          r = vtk.vtkPolyDataReader()
+          r.SetFileName(a)
+          r.Update()
+          polydata = r.GetOutput()
+
+    else:
+      polydata = a
 
     points = numpy_support.vtk_to_numpy(polydata.GetPoints().GetData())
     lines = numpy_support.vtk_to_numpy(polydata.GetLines().GetData())
