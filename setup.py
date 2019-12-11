@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="trako", 
-    version="0.2.3.dev9",
+    version="0.2.4.dev9",
     author="Daniel Haehn",
     author_email="haehn@mpsych.org",
     description="The TRAKO Project: Compression of DTI Streamlines.",
