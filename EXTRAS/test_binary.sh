@@ -2,9 +2,9 @@
 ../trakofy -i ../DATA/example.vtp -o ../DATA/example.tko
 cp ../DATA/example.tko ../DATA/example.gltf
 ls -l ../DATA/example.gltf
-node_modules/gltf-pipeline/bin/gltf-pipeline.js -i ../DATA/example.gltf -o ../DATA/example.glb
+node_modules/gltf-pipeline/bin/gltf-pipeline.js -i ../DATA/example.gltf -o ../DATA/example.glb --keepUnusedElements
 ls -l ../DATA/example.glb
-node_modules/gltf-pipeline/bin/gltf-pipeline.js -i ../DATA/example.glb -o ../DATA/restored_from_bin.gltf
+node_modules/gltf-pipeline/bin/gltf-pipeline.js -i ../DATA/example.glb -o ../DATA/restored_from_bin.gltf --keepUnusedElements
 cp ../DATA/restored_from_bin.gltf ../DATA/restored_from_bin.tko 
-../untrakofy -i ../DATA/restored_from_bin.tko -o DATA/restored_from_bin.vtp
-../tkompare -a DATA/example.vtp -b DATA/restored_from_bin.vtp
+../untrakofy -i ../DATA/restored_from_bin.tko -o ../DATA/restored_from_bin.vtp
+../tkompare -a ../DATA/example.vtp -b ../DATA/restored_from_bin.vtp

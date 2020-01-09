@@ -131,7 +131,12 @@ def convert(input, output=None, verbose=True):
       if bytes[0:5] != b'DRACO':
         print('Did not find Draco compressed data..')
 
-      draco_points = TrakoDracoPy.decode_point_cloud_buffer(bytes).points
+      bytestart = gltf.bufferViews[bufferview].byteOffset
+      byteend = bytestart + gltf.bufferViews[bufferview].byteLength
+      sub_bytes = bytes[bytestart:byteend]
+
+      draco_points = TrakoDracoPy.decode_point_cloud_buffer(sub_bytes).points
+
 
       if accessor.type in gltfType_to_vtkNumberOfComponents:
         number_of_elements = gltfType_to_vtkNumberOfComponents[accessor.type]
@@ -174,7 +179,12 @@ def convert(input, output=None, verbose=True):
   if bytes[0:5] != b'DRACO':
     print('Did not find Draco compressed data..')
 
-  draco_points = TrakoDracoPy.decode_point_cloud_buffer(bytes).points
+  bytestart = gltf.bufferViews[bufferview].byteOffset
+  byteend = bytestart + gltf.bufferViews[bufferview].byteLength
+  sub_bytes = bytes[bytestart:byteend]
+
+  draco_points = TrakoDracoPy.decode_point_cloud_buffer(sub_bytes).points
+
 
   # make ints...
   indices = np.round(draco_points).astype(np.int)
@@ -222,13 +232,25 @@ def convert(input, output=None, verbose=True):
       if bytes[0:5] != b'DRACO':
         print('Did not find Draco compressed data..')
 
-      draco_points = TrakoDracoPy.decode_point_cloud_buffer(bytes).points
+
+      bytestart = gltf.bufferViews[bufferview].byteOffset
+      byteend = bytestart + gltf.bufferViews[bufferview].byteLength
+      sub_bytes = bytes[bytestart:byteend]
+
+      draco_points = TrakoDracoPy.decode_point_cloud_buffer(sub_bytes).points
 
       if accessor.type in gltfType_to_vtkNumberOfComponents:
         number_of_elements = gltfType_to_vtkNumberOfComponents[accessor.type]
       else:
         # work around
         number_of_elements = accessor.type
+
+
+
+      # print(bytestart,byteend,len(bytes),len(draco_points),number_of_elements,datatype)
+
+      # draco_points = draco_points[bytestart:byteend]
+
 
       datatype = gltfComponentType_to_npDataType[accessor.componentType]
       draco_points_reshaped = np.array(draco_points, dtype=datatype).reshape(int(len(draco_points)/number_of_elements), number_of_elements)
@@ -241,7 +263,6 @@ def convert(input, output=None, verbose=True):
 
       if verbose:
         print('Restored property', p_name)
-
 
   return polydata
 
