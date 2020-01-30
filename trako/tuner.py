@@ -11,7 +11,7 @@ import trako as TKO
 class Tuner:
 
   @staticmethod
-  def tune(vtpfile, maxdelta):
+  def tune(vtpfile, search_space, maxdelta=0.01):
     '''
     '''
 
@@ -34,12 +34,7 @@ class Tuner:
 
     print('TKO default size', tkosize)
     
-    search_space = {
-     'position': [True],
-     'sequential': [True],
-     'quantization_bits': [10,11],
-     'compression_level': [5,6]
-    }
+
 
     study = optuna.create_study(sampler=GridSampler(search_space), pruner=RepeatPruner)
     study.set_user_attr('vtpfile', vtpfile)
@@ -53,7 +48,7 @@ class Tuner:
     # unique_trials = 20
     # while unique_trials > len(set(str(t.params) for t in study.trials)):
     #   # study.optimize(objective, n_trials=1)
-    study.optimize(Tuner.run, n_trials=1000, n_jobs=4)
+    study.optimize(Tuner.run, n_trials=1000)#, n_jobs=4)
 
 
   @staticmethod
