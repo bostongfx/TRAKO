@@ -336,10 +336,12 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
       else:
         bounds = [[npType(np.min(data))], [npType(np.max(data))]]
         
-
       if config:
+        
+        if attributename in config or '*' in config:
 
-        if attributename in config:
+          if not attributename in config:
+            config[attributename] = dict(config['*'])
 
           position = config[attributename]['position']
           sequential = config[attributename]['sequential']
@@ -466,9 +468,12 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
 
     if config:
 
-      if 'INDICES' in config:
+      if 'INDICES' in config or '*' in config:
 
         attributename = 'INDICES'
+
+        if not attributename in config:
+          config[attributename] = dict(config['*'])
 
         position = config[attributename]['position']
         sequential = config[attributename]['sequential']
@@ -609,7 +614,10 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
 
       if config:
 
-        if p_name in config:
+        if p_name in config or '*' in config:
+
+          if not p_name in config:
+            config[p_name] = dict(config['*'])
 
           position = config[p_name]['position']
           sequential = config[p_name]['sequential']

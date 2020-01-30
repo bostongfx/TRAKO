@@ -3,13 +3,13 @@ import trako as TKO
 import argparse, os, re, sys
 import vtk
 
-def untrakofy(input, output):
+def untrakofy(input, output, verbose=True):
   '''
   '''
 
   if os.path.splitext(output)[1].lower() == '.vtp':
 
-    polydata = TKO.Decoder.toVtp(input)
+    polydata = TKO.Decoder.toVtp(input, verbose=verbose)
 
     w = vtk.vtkXMLPolyDataWriter()
     w.SetFileName(output)
