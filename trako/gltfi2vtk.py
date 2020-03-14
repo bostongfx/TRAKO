@@ -62,6 +62,13 @@ def convert(input, output=None, verbose=True):
 
   gltf = pygltflib.GLTF2.load_json(input)
 
+
+  polydata = vtk.vtkPolyData()
+
+  # return empty polydata if there are no streamlines
+  if len(gltf.meshes) == 0:
+    return polydata
+
   # get all attributes
   attributes = gltf.meshes[0].primitives[0].attributes
 
@@ -71,7 +78,6 @@ def convert(input, output=None, verbose=True):
   else:
     properties = {}
 
-  polydata = vtk.vtkPolyData()
 
   #
   # position

@@ -10,7 +10,10 @@ def trakomagic(input, compressed, restored, config=None):
   #
   t0 = time.time()
   tko = TKO.Encoder.fromVtp(input, config=config, verbose=False)
-  tko.save(compressed)
+  try:
+    tko.save(compressed)
+  except:
+    return tko
   c_time = time.time()-t0
 
   #

@@ -230,7 +230,12 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
 
   if config and draco:
     if verbose:
-        print('Using custom configuration for Draco.')
+      print('Using custom configuration for Draco.')
+
+  if (fibercluster['number_of_streamlines'] == 0):
+    if verbose:
+      print('No streamlines!')
+    return GLTF2()
 
   gltf = GLTF2()
   scene = Scene()
@@ -336,6 +341,8 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
       else:
         bounds = [[npType(np.min(data))], [npType(np.max(data))]]
         
+      bounds = np.nan_to_num(bounds, copy=False)
+
       if config:
         
         if attributename in config or '*' in config:
@@ -386,6 +393,8 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
           bounds[1].append(npType(np.max(data[:,k])))
       else:
         bounds = [[npType(np.min(data))], [npType(np.max(data))]]
+
+      print('b1',bounds)
 
       #
       # create bytestream for buffer
@@ -464,7 +473,8 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
     #     bounds[1].append(np.max(data[:,k]).astype(np.float))
     # else:
     bounds = [[int(np.min(indices))], [int(np.max(indices))]]
-
+    bounds = np.nan_to_num(bounds, copy=False).astype(np.float)
+    
 
     if config:
 
@@ -497,6 +507,7 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
 
     # fix nan
     np.nan_to_num(indices, copy=False)
+    # np.nan_to_num(bounds, copy=False)
 
     if len(indices) == 0:
       if verbose:
@@ -593,6 +604,7 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
       else:
         bounds = [[npType(np.min(data))], [npType(np.max(data))]]
         
+      bounds = np.nan_to_num(bounds, copy=False).astype(np.float)
 
       # for index, values in enumerate(data):
       #   # print(index, values)
@@ -664,6 +676,7 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
       else:
         bounds = [[npType(np.min(data))], [npType(np.max(data))]]
 
+      bounds = np.nan_to_num(bounds, copy=False).astype(np.float)
 
       chunk = b""
       # bounds = (None, None) # min,max
