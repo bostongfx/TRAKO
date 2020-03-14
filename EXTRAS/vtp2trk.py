@@ -10,7 +10,7 @@ import numpy as np
 import os
 
 
-def convert(input, output, force, only_points=False):
+def convert(input, output, force=True, only_points=False):
 
   # print('Converting', len(input), 'files.')
 
