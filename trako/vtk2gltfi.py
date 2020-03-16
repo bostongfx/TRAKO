@@ -46,7 +46,7 @@ vtkNumberOfComponents_to_gltfType = {
 
 
 
-def convert(input, config=None, verbose=True):
+def convert(input, config=None, verbose=True, coords_only=False):
 
   extension = os.path.splitext(input)[1].lower()
 
@@ -84,23 +84,25 @@ def convert(input, config=None, verbose=True):
   scalar_types = []
   scalar_names = []
 
-  for i in range(number_of_scalars):
-      arr_name = pointdata.GetArrayName(i)
-      scalar_names.append(str(arr_name))
-      arr = pointdata.GetArray(i)
+  if not coords_only:
 
-      # arr.ComputeScalarRange()
+    for i in range(number_of_scalars):
+        arr_name = pointdata.GetArrayName(i)
+        scalar_names.append(str(arr_name))
+        arr = pointdata.GetArray(i)
 
-      # print(arr)
+        # arr.ComputeScalarRange()
 
-      number_of_components = arr.GetNumberOfComponents()
-      data_type = arr.GetDataType()
+        # print(arr)
 
-      scalar_types.append((data_type, number_of_components))
+        number_of_components = arr.GetNumberOfComponents()
+        data_type = arr.GetDataType()
 
-      if verbose:
-        print('Loading scalar', arr_name)
-      scalars.append(numpy_support.vtk_to_numpy(arr))
+        scalar_types.append((data_type, number_of_components))
+
+        if verbose:
+          print('Loading scalar', arr_name)
+        scalars.append(numpy_support.vtk_to_numpy(arr))
 
   #
   # properties are per streamline
@@ -111,21 +113,23 @@ def convert(input, config=None, verbose=True):
   property_types = []
   property_names = []
 
-  for i in range(number_of_properties):
-      arr_name = celldata.GetArrayName(i)
-      property_names.append(str(arr_name))
-      arr = celldata.GetArray(i)
+  if not coords_only:
 
-      # print(i, arr)
+    for i in range(number_of_properties):
+        arr_name = celldata.GetArrayName(i)
+        property_names.append(str(arr_name))
+        arr = celldata.GetArray(i)
 
-      number_of_components = arr.GetNumberOfComponents()
-      data_type = arr.GetDataType()
+        # print(i, arr)
 
-      property_types.append((data_type, number_of_components))
+        number_of_components = arr.GetNumberOfComponents()
+        data_type = arr.GetDataType()
 
-      if verbose:
-        print('Loading property', arr_name)
-      properties.append(numpy_support.vtk_to_numpy(arr))
+        property_types.append((data_type, number_of_components))
+
+        if verbose:
+          print('Loading property', arr_name)
+        properties.append(numpy_support.vtk_to_numpy(arr))
 
 
   #

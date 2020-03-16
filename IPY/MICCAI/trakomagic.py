@@ -48,7 +48,7 @@ def trakomagic(input, compressed, restored, config=None, coordinate_stats=False)
     # print('Max error', stats[1])
     # print('Mean error', stats[2])
     # print('Min error', stats[0])
-    c_ratio = (1-len(c_fiberlengths+c_streamlines)/float(originalsize))*100
+    c_ratio = (1-float(compressedsize)/float(originalsize))*100
     c_factor = float(originalsize) / float(compressedsize)
 
     stats = {
