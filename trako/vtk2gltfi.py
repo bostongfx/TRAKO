@@ -364,6 +364,19 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
           if verbose:
             print ('Custom config for', attributename)
 
+        else:
+
+          # compress the chunks
+          position = False
+          if (attributename == 'POSITION'):
+            position = True
+
+          sequential = True
+          qb=14
+          cl=1
+          qrange=-1
+          qorigin=None
+
       else:
 
         # compress the chunks
@@ -498,6 +511,15 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
 
         if verbose:
           print ('Custom config for', attributename)
+
+      else:
+
+        position = False
+        sequential = True
+        qb=14
+        cl=1
+        qrange=-1
+        qorigin=None
 
     else:
 
@@ -644,6 +666,15 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
 
           if verbose:
             print ('Custom config for', p_name)
+
+        else:
+          # compress the chunks
+          position = False
+          sequential = True
+          qb=14
+          cl=1
+          qrange=-1
+          qorigin=None
 
       else:
 
