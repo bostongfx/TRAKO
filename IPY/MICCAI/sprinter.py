@@ -47,13 +47,16 @@ class Sprinter:
           run_name = 'XYZ + Ind.'
         elif run_name == 'qbi_CL0_{bits}':
           run_name = 'XYZ + Ind. Level 0'
+        elif run_name.endswith('binary'):
+          run_name = 'XYZ + Ind. (Binary)'
         plt.scatter(tko_sizes_, tko_errors, s = size, alpha=1, label='TRAKO ('+run_name+')')
         plt.errorbar(tko_sizes_, tko_errors, tko_stds, fmt='|', alpha=.5)
+
 
     for x,s in enumerate(longest_run):
 
       y = tko_errors[x]
-      y += y*0.05
+      y += -0.02#y*0.05
       txt = tko_bits[x]
       x = tko_sizes_[x]
       x += x*0.01
@@ -92,6 +95,7 @@ class Sprinter:
     if xlim:
       plt.xlim(xlim[0], xlim[1])
 
+    
     # plt.axvline(x=input_size/1000000, color='red', linestyle='--')
 
     plt.xlabel('Data Size [MB]')
@@ -160,7 +164,7 @@ class Sprinter:
     return qfib_sizes, qfib_errors, qfib_stds
 
   @staticmethod
-  def run_trako(config, tko_files, tko_bits, coords_only=True):
+  def run_trako(config, tko_files, tko_bits, coords_only=True, binary=False):
 
       config_ = dict(config)
 
@@ -168,6 +172,7 @@ class Sprinter:
       tko_errors = [0]*len(tko_bits)
       tko_stds = [0]*len(tko_bits)
       fails = [len(tko_files)]*len(tko_bits)
+
       for j,f in enumerate(tko_files):
           for i,b in enumerate(tko_bits):
 
@@ -179,22 +184,30 @@ class Sprinter:
                   config[c]['quantization_bits'] = b # update bits for config
               
               try:
-                  rundata = runner.Runner.tko(f[0], f[1], config=config, coords_only=coords_only, force=False)
+                  rundata = runner.Runner.tko(f[0], f[1], config=config, coords_only=coords_only, force=False, binary=binary)
               except:
                   fails[i] -= 1
                   continue
               c_time = rundata[0]
               d_time = rundata[1]
-              sizestats = rundata[2]
+              
+              if binary:
+                sizestats = rundata[-1]
+              else:
+                sizestats = rundata[2]
+
+
               compressedsize = sizestats[1]
               meanerror = rundata[3][2]
               stderror = rundata[3][3]
+
               tko_sizes[i] += compressedsize
               tko_errors[i] += meanerror
               tko_stds[i] += stderror
       #         tko_sizes.append(compressedsize)
       #         tko_errors.append(meanerror)
       #         tko_stds.append(stderror)
+
       for i,b in enumerate(tko_bits):
           if fails[i] == 0:
             continue
@@ -202,5 +215,6 @@ class Sprinter:
           tko_errors[i] /= fails[i]#len(tko_files)
           tko_stds[i] /= fails[i]#len(tko_files)
           
+
       return tko_sizes, tko_errors, tko_stds
 

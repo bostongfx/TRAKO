@@ -213,9 +213,11 @@ class Runner:
 
 
   @staticmethod
-  def tko(workingdir, input, compressed=None, restored=None, config=None, force=False, coords_only=False, verbose=False):
+  def tko(workingdir, input, compressed=None, restored=None, config=None, force=False, binary=False, coords_only=False, verbose=False):
     '''
     '''
+
+    AGIPIPELINE = '../../EXTRAS/node_modules/gltf-pipeline/bin/'
 
     if not input.endswith('vtp') and not input.endswith('vtk'):
       # we need to convert
@@ -297,14 +299,42 @@ class Runner:
       with open(os.path.join(workingdir, stats), 'rb') as f:
         statsdata = pickle.load(f)
 
-    [c_time, d_time, sizestatsdata, (min_e, max_e, mean_e, std_e), (end_min_e, end_max_e, end_mean_e, end_std_e)] = \
-      statsdata
+    #
+    # optional binary encoding
+    #
+    if binary:
+      # print('yes')
+      binary_file = compressed + '.glb'
+      if not os.path.exists(os.path.join(workingdir, binary_file)) or force:
+        # print('run')
+        os.system('cp ' + os.path.join(workingdir, compressed) + ' /tmp/out.gltf')
+        os.system(AGIPIPELINE+'gltf-pipeline.js -i ' + '/tmp/out.gltf' + \
+          ' -o ' + os.path.join(workingdir, binary_file) + ' --keepUnusedElements')
+        # print(AGIPIPELINE+'gltf-pipeline.js -i ' + os.path.join(workingdir, compressed) + \
+          # ' -o ' + os.path.join(workingdir, binary_file) + ' --keepUnusedElements')
+
+      binary_sizestatsdata = Runner.sizestats(os.path.join(workingdir, original), os.path.join(workingdir, binary_file))
+      # print(binary_sizestatsdata)
+
+      statsdata.append(binary_sizestatsdata)
+
+      [c_time, d_time, sizestatsdata, (min_e, max_e, mean_e, std_e), (end_min_e, end_max_e, end_mean_e, end_std_e), binary_sizestatsdata] = \
+        statsdata
+
+    else:
+
+      binary_sizestatsdata = (0,0,0,0)
+      [c_time, d_time, sizestatsdata, (min_e, max_e, mean_e, std_e), (end_min_e, end_max_e, end_mean_e, end_std_e)] = \
+        statsdata
 
     if verbose:
       print('Times', c_time, d_time)
       print('Size Stats', sizestatsdata)
       print('Error', min_e, max_e, mean_e, std_e)
       print('Endpoint Error', end_min_e, end_max_e, end_mean_e, end_std_e)
+
+      if binary:
+        print('Binary Size Stats', binary_sizestatsdata)
 
     return statsdata
 
