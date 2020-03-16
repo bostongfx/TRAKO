@@ -4,6 +4,7 @@ import nibabel as nib
 import pickle
 import trako as TKO
 import vtk
+import getpass
 
 class Runner:
 
@@ -208,7 +209,7 @@ class Runner:
     '''
     '''
 
-    QFIB = '/home/d/Projects/qfib/qfib'
+    QFIB = '/home/'+getpass.getuser()+'/Projects/qfib/qfib'
 
     if not input.endswith('tck'):
       # we need to convert
