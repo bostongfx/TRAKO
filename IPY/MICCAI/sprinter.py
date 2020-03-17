@@ -358,6 +358,7 @@ class Sprinter:
               try:
                   rundata = runner.Runner.tko(f[0], f[1], config=config, coords_only=coords_only, force=False, binary=binary)
               except:
+                  print('Failing..')
                   fails[i] -= 1
                   continue
 
