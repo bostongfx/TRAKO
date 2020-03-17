@@ -45,6 +45,10 @@ class Runner:
     end_max_e = []
     end_mean_e = []
     end_std_e = []
+
+    if len(streamlines1) == 0 or len(streamlines2)==0:
+      return (0,0,0,0), (0,0,0,0)
+
     for i,s in enumerate(streamlines1):
       s1 = s
       s2 = streamlines2[i]
@@ -108,7 +112,10 @@ class Runner:
     '''
     '''
     originalsize = os.path.getsize(original)
-    compressedsize = os.path.getsize(compressed)
+    try:
+      compressedsize = os.path.getsize(compressed)
+    except:
+      compressedsize = originalsize
 
     c_ratio = (1-float(compressedsize)/float(originalsize))*100
     c_factor = float(originalsize) / float(compressedsize)
@@ -402,8 +409,11 @@ class Runner:
     if not os.path.exists(os.path.join(workingdir, stats)) or force:
       original_data = nib.streamlines.load(os.path.join(workingdir, original), lazy_load=False)
       original_streamlines = original_data.streamlines
-      restored_data = nib.streamlines.load(os.path.join(workingdir, restored), lazy_load=False)
-      restored_streamlines = restored_data.streamlines
+      try:
+        restored_data = nib.streamlines.load(os.path.join(workingdir, restored), lazy_load=False)
+        restored_streamlines = restored_data.streamlines
+      except:
+        restored_streamlines = []
 
       statsdata = Runner.error_per_streamlines(original_streamlines, restored_streamlines)
       sizestatsdata = Runner.sizestats(os.path.join(workingdir, original), os.path.join(workingdir, compressed))
