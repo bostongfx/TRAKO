@@ -313,6 +313,7 @@ class Runner:
         # print(AGIPIPELINE+'gltf-pipeline.js -i ' + os.path.join(workingdir, compressed) + \
           # ' -o ' + os.path.join(workingdir, binary_file) + ' --keepUnusedElements')
 
+
       binary_sizestatsdata = Runner.sizestats(os.path.join(workingdir, original), os.path.join(workingdir, binary_file))
       # print(binary_sizestatsdata)
 
