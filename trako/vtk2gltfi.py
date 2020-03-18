@@ -345,7 +345,7 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
       else:
         bounds = [[npType(np.min(data))], [npType(np.max(data))]]
         
-      bounds = np.nan_to_num(bounds, copy=False)
+      bounds = np.nan_to_num(bounds, copy=False).astype(np.float)
 
       if config:
         
@@ -410,6 +410,8 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
           bounds[1].append(npType(np.max(data[:,k])))
       else:
         bounds = [[npType(np.min(data))], [npType(np.max(data))]]
+
+      bounds = bounds.astype(np.float)
 
       print('b1',bounds)
 
