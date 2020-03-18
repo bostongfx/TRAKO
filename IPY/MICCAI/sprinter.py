@@ -4,8 +4,22 @@ import runner
 class Sprinter:
 
   @staticmethod
-  def createtable(dataset, originalsize, tkoruns={}, selector=None, qfibruns=None, dpyruns=None):
+  def createfulltable(dataset, originalsize, runs, verbose=False):
 
+    print('\\textbf{'+dataset+'} & '+str(np.round(originalsize/1000000.,2))+'M\\\\')
+
+    for r in runs.keys():
+
+      selector = runs[r][0]
+      rest = {r:runs[r][1:]}
+
+      Sprinter.createtable(dataset, originalsize, rest, selector)
+
+
+
+  @staticmethod
+  def createtable(dataset, originalsize, tkoruns={}, 
+                  selector=None, qfibruns=None, dpyruns=None, verbose=False):
 
 
     for r in tkoruns.keys():
@@ -30,56 +44,78 @@ class Sprinter:
           run_name = 'XYZ only'
         elif run_name == 'qbi{bits}':
           run_name = 'XYZ + Ind.'
+          run_name = 'TRAKO'
         elif run_name == 'qbi_CL0_{bits}':
           run_name = 'XYZ + Ind. Level 0'
         elif run_name.endswith('binary'):
           run_name = 'XYZ + Ind. (Binary)'
-
+          run_name = 'TRAKO (Binary)'
+        elif run_name == 'qfib (8bit)':
+          run_name = 'qfib (8bit)~\\cite{mercier2020qfib}'
+        elif run_name == 'qfib (16bit)':
+          run_name = 'qfib (16bit)~\\cite{mercier2020qfib}'
+        elif run_name == 'zfib':
+          run_name = 'zfib/Dipy~\\cite{presseau2015new}'
         compressedsize = tko_sizes[selector]
 
         c_ratio = (1-float(compressedsize)/float(originalsize))*100
         c_factor = float(originalsize) / float(compressedsize)
 
-        print('-'*20)
-        print(r)
-        print('size', compressedsize)
-        print('ratio', c_ratio)
-        print('c_factor', c_factor)
+
+        if verbose:
+          print('-'*20)
+          print(r)
+          print('size', compressedsize)
+          print('ratio', c_ratio)
+          print('c_factor', c_factor)
 
 
         min_e = tko_advstats[0][selector]
-        print('min_e', min_e)
+        if verbose:
+          print('min_e', min_e)
         max_e = tko_advstats[1][selector]
-        print('max_e', max_e)
+        if verbose:
+          print('max_e', max_e)
         if len(tko_errors) > 0:
           mean_e = tko_errors[selector]
-          print('mean_e', mean_e)
+          if verbose:
+            print('mean_e', mean_e)
           std = tko_stds[selector]
-          print('std', std)
+          if verbose:
+            print('std', std)
         else:
           mean_e = 0.
           std = 0.
-          print('mean_e', 0)
-          print('std',0)
+          if verbose:
+            print('mean_e', 0)
+          if verbose:
+            print('std',0)
 
         e_min_e = tko_advstats[2][selector]
-        print('e_min_e', e_min_e)
+        if verbose:
+          print('e_min_e', e_min_e)
         e_max_e = tko_advstats[3][selector]
-        print('e_max_e', e_max_e)
+        if verbose:
+          print('e_max_e', e_max_e)
         e_mean_e = tko_advstats[4][selector]
-        print('e_mean_e', e_mean_e)
+        if verbose:
+          print('e_mean_e', e_mean_e)
         e_std = tko_advstats[5][selector]
-        print('e_std', e_std)
+        if verbose:
+          print('e_std', e_std)
         c_time = tko_advstats[6][selector]
-        print('c_time', c_time)
+        if verbose:
+          print('c_time', c_time)
         d_time = tko_advstats[7][selector]
-        print('d_time', d_time)
-        print('-'*20)
+        if verbose:
+          print('d_time', d_time)
+        if verbose:
+          print('-'*20)
 
         latexline = '~~~'+run_name+' & '+ \
-                    str(np.round(compressedsize/1000000.,0)) + ' & '+ \
-                    str(np.round(c_ratio,3))+'$\\times$' + ' & '+ \
-                    str(np.round(c_factor,3))+'\\%' + ' & '+ \
+                    str(np.round(compressedsize/1000000.,2)) + 'M & '+ \
+                    str(np.round(c_ratio,3))+'\\%' + ' & '+ \
+                    str(np.round(c_factor,3))+'$\\times$' + ' & '+ \
                     str(np.round(min_e,3)) + ' & '+ \
                     str(np.round(max_e,3)) + ' & '+ \
                     str(np.round(mean_e,3)) + '$\\pm$' + str(np.round(std,3)) + ' & '+ \
@@ -236,9 +272,15 @@ class Sprinter:
         dpy_e_meanerror[0] += e_meanerror
         dpy_e_std[0] += e_stderror
 
+        dpy_ctime[0] += c_time
+        dpy_dtime[0] += d_time
+
         dpy_sizes[0] += compressedsize
         dpy_errors[0] += meanerror
         dpy_stds[0] += stderror
+
+
+    dpy_sizes[0] /= len(dpy_files)
 
     advancedstats = [dpy_minerror, dpy_maxerror, dpy_e_minerror, dpy_e_maxerror, \
                        dpy_e_meanerror, dpy_e_std, dpy_ctime, dpy_dtime]

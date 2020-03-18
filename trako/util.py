@@ -13,14 +13,25 @@ class Util:
 
     if clusters==3:
 
+      if len(points1) == 0 or len(points2) == 0:
+          return (0,0,0,0),[]
+
       for i,p in enumerate(points1):
 
         p1 = points1[i]
         p2 = points2[i]
 
+        if (np.any(np.isnan(p1))):
+          p1 = np.nan_to_num(p1)
+        if (np.any(np.isnan(p2))):
+          p2 = np.nan_to_num(p2)
+
         dist = np.linalg.norm(p1-p2)
 
         distances.append(dist)
+
+    if len(distances) == 0:
+      return (0,0,0,0),[]
 
     return (np.min(distances), np.max(distances), np.mean(distances), np.std(distances)), distances
 
