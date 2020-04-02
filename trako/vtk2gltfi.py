@@ -151,21 +151,6 @@ def convert(input, config=None, verbose=True, coords_only=False):
 
       lines_just_length.append(line_length)
 
-      current_line = lines[i+1+line_index:i+1+line_length+line_index]
-      current_indices = []
-
-      # print('line',line_index)
-      for k in range(len(current_line)-1):
-
-          indexA = current_line[k]
-          indexB = current_line[k+1]
-      
-          # print(indexA, indexB)
-          current_indices.append(indexA)
-          current_indices.append(indexB)
-      
-      ordered_indices += current_indices
-
       i += line_length
       line_index += 1
       if line_index < number_of_streamlines:
@@ -247,6 +232,9 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
   gltf.scene = 0
   gltf.scenes.append(scene)
 
+
+
+
   # we need a bunch of buffers for all the attributes
   buffers = collections.OrderedDict()
   for attributename in fibercluster['per_vertex_data'].keys():
@@ -262,6 +250,8 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
   # and a bunch of accessors
   accessors = []
 
+
+
   # we need stuff for properties as well
   p_buffers = collections.OrderedDict()
   for p_name in fibercluster['per_streamline_data'].keys():
@@ -275,6 +265,12 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
   # and a bunch of accessors
   p_accessors = []
 
+
+
+
+  #
+  # Start glTF setup
+  #
   node = Node() # one fiber cluster has a node
   mesh = Mesh() # .. and a mesh
   node.mesh = 0
@@ -291,176 +287,43 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
   primitive = Primitive()
   for attributeindex,attributename in enumerate(custom_attributes.keys()):
     # we need to update the indices increasingly
-    # print('before', s, custom_attributes[attributename])
     custom_attributes[attributename] = attributeindex
-    # print('after', custom_attributes[attributename])
 
   primitive.attributes = Attributes(**custom_attributes)
   primitive.mode = 1
 
 
-  for attributeindex,attributename in enumerate(fibercluster['per_vertex_data'].keys()):
 
-    # if verbose:
-    #     print('Parsing', attributename)
+
+
+  #
+  # per-vertex values (position and scalars)
+  #
+  for attributeindex,attributename in enumerate(fibercluster['per_vertex_data'].keys()):
 
     componentType = fibercluster['per_vertex_data'][attributename]['componentType']
     aType = fibercluster['per_vertex_data'][attributename]['type']
     data = fibercluster['per_vertex_data'][attributename]['data']
 
-    if componentType == pygltflib.FLOAT:
-      asciiType = 'f'
-      npType = float
-
-    elif componentType == pygltflib.UNSIGNED_INT:
-      asciiType = 'I'
-      npType = int
-
-    else:
-      asciiType = 'f'
-      npType = float
-      if verbose:
-        print('Type not supported!', componentType)
-
-    if draco:
-
-      # bounds = ([0],[0])
-      # for index, values in enumerate(data):
-
-      #   if not type(values) is np.ndarray:
-      #     values = [values]
-
-      #   if index == 0:
-      #     # first loop run
-      #     bounds = (list([float(v) for v in values]), list([float(v) for v in values]))
-      #   else:
-      #     for i,v in enumerate(values):       
-      #       bounds[0][i] = min(float(bounds[0][i]), float(v))
-      #       bounds[1][i] = max(float(bounds[1][i]), float(v))
-      bounds = [[],[]]
-      if data.ndim > 1:
-        for k in range(data.shape[1]):
-          bounds[0].append(npType(np.min(data[:,k])))
-          bounds[1].append(npType(np.max(data[:,k])))
-      else:
-        bounds = [[npType(np.min(data))], [npType(np.max(data))]]
-        
-      bounds = np.nan_to_num(bounds, copy=False).astype(np.float)
-
-      if config:
-        
-        if attributename in config or '*' in config:
-
-          if not attributename in config:
-            config[attributename] = dict(config['*'])
-
-          position = config[attributename]['position']
-          sequential = config[attributename]['sequential']
-          qb = config[attributename]['quantization_bits']
-          cl = config[attributename]['compression_level']
-          qrange = config[attributename]['quantization_range']
-          qorigin = config[attributename]['quantization_origin']
-
-          if verbose:
-            print ('Custom config for', attributename)
-
-        else:
-
-          # compress the chunks
-          position = False
-          if (attributename == 'POSITION'):
-            position = True
-
-          sequential = True
-          qb=14
-          cl=1
-          qrange=-1
-          qorigin=None
-
-      else:
-
-        # compress the chunks
-        position = False
-        if (attributename == 'POSITION'):
-          position = True
-
-        sequential = True
-        qb=14
-        cl=1
-        qrange=-1
-        qorigin=None
-
-      # fix nan
-      np.nan_to_num(data, copy=False)
-
-      if data.shape[0] == 0:
-        if verbose:
-          print('Scalar with length 0! Skipping..')
-        chunk = b""
-      else:
-        chunk = TrakoDracoPy.encode_point_cloud_to_buffer(data.ravel(), position=position, sequential=sequential, 
-          quantization_bits=qb, compression_level=cl, quantization_range=qrange, quantization_origin=qorigin)
-
-    else:
-
-      bounds = [[],[]]
-      if data.ndim > 1:
-        for k in range(data.shape[1]):
-          bounds[0].append(npType(np.min(data[:,k])))
-          bounds[1].append(npType(np.max(data[:,k])))
-      else:
-        bounds = [[npType(np.min(data))], [npType(np.max(data))]]
-
-      bounds = bounds.astype(np.float)
-
-      print('b1',bounds)
-
-      #
-      # create bytestream for buffer
-      #
-      chunk = b""
-      # bounds = (None, None) # min,max
-      for index, values in enumerate(data):
-
-        
-        if not type(values) is np.ndarray:
-          values = [values]
-
-        # if chunk == b"":
-        #   # first loop run
-        #   bounds = (list([float(v) for v in values]), list([float(v) for v in values]))
-        # else:
-        #   for i,v in enumerate(values):       
-        #     bounds[0][i] = min(float(bounds[0][i]), float(v))
-        #     bounds[1][i] = max(float(bounds[1][i]), float(v))
-
-        pack = "<" + (asciiType*len(values))
-
-        subChunk = struct.pack(pack, *values)
-        chunk += subChunk
+    asciiType, npType = componentTypeConverter(componentType, verbose)
 
 
-    # each attribute has a bufferview for each streamline
+    chunk, bounds = packit(asciiType, npType, draco, data, config, attributename, verbose)
+
+    # each attribute has a bufferview
     # and an accessor
     bufferview = BufferView()
     bufferview.target = ARRAY_BUFFER
-    # print(buffers.keys())
     bufferview.buffer = attributeindex
-    bufferview.byteOffset = 0#len(chunkers[attributename])##byteOffset 
+    bufferview.byteOffset = 0
     bufferview.byteLength = len(chunk) 
     bufferviews.append(bufferview)
 
-    # print(len(chunkers[attributename]))
-
     chunkers[attributename] += chunk
 
-    # byteOffset += len(chunk)
-
-
     accessor = Accessor()
-    # print(accessor)
     accessor.bufferView = len(bufferviews)-1
-    accessor.byteOffset = 0#byteOffset
+    accessor.byteOffset = 0
     accessor.componentType = componentType
     accessor.count = len(data)
     accessor.type = aType
@@ -468,124 +331,31 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
     accessor.max = list(bounds[1])
     accessors.append(accessor)
 
-  # now indices
-  indices = fibercluster['indices']
-
-  if draco:
-
-    # for index, values in enumerate(indices):
-
-    #   values = [values]
-
-    #   if chunk == b"":
-    #     # first loop run
-    #     bounds = (list([int(v) for v in values]), list([int(v) for v in values]))
-    #   else:
-    #     for i,v in enumerate(values):       
-    #       bounds[0][i] = min(int(bounds[0][i]), int(v))
-    #       bounds[1][i] = max(int(bounds[1][i]), int(v))
-
-    # bounds = [[],[]]
-    # if data.ndim > 1:
-    #   for k in range(data.shape[1]):
-    #     bounds[0].append(np.min(data[:,k]).astype(np.float))
-    #     bounds[1].append(np.max(data[:,k]).astype(np.float))
-    # else:
-    bounds = [[int(np.min(indices))], [int(np.max(indices))]]
-    bounds = np.nan_to_num(bounds, copy=False).astype(np.float)
-    
-
-    if config:
-
-      if 'INDICES' in config or '*' in config:
-
-        attributename = 'INDICES'
-
-        if not attributename in config:
-          config[attributename] = dict(config['*'])
-
-        position = config[attributename]['position']
-        sequential = config[attributename]['sequential']
-        qb = config[attributename]['quantization_bits']
-        cl = config[attributename]['compression_level']
-        qrange = config[attributename]['quantization_range']
-        qorigin = config[attributename]['quantization_origin']
-
-        if verbose:
-          print ('Custom config for', attributename)
-
-      else:
-
-        position = False
-        sequential = True
-        qb=14
-        cl=1
-        qrange=-1
-        qorigin=None
-
-    else:
-
-      position = False
-      sequential = True
-      qb=14
-      cl=1
-      qrange=-1
-      qorigin=None
 
 
-    # fix nan
-    np.nan_to_num(indices, copy=False)
-    # np.nan_to_num(bounds, copy=False)
 
-    if len(indices) == 0:
-      if verbose:
-        print('Indices with length 0! Skipping..')
-      i_chunk = b""
-    else:
-      i_chunk = TrakoDracoPy.encode_point_cloud_to_buffer(indices, position=False, sequential=True, 
-        quantization_bits=qb, compression_level=cl, quantization_range=qrange, quantization_origin=qorigin)
 
-  else:
 
-    #
-    # create bytestream for index buffer
-    #
-    i_chunk = b""
-    # bounds = (None, None) # min,max
-    bounds = [[int(np.min(indices))], [int(np.max(indices))]]
+  #
+  # indices
+  #
+  indices = np.array(fibercluster['indices'])
+  asciiType = 'H' # always integer
+  npType = int # always integer
 
-    for index, values in enumerate(indices):
-
-      values = [values]
-
-      # if i_chunk == b"":
-      #   # first loop run
-      #   bounds = (list([float(v) for v in values]), list([float(v) for v in values]))
-      # else:
-      #   for i,v in enumerate(values):       
-      #     bounds[0][i] = min(int(bounds[0][i]), int(v))
-      #     bounds[1][i] = max(int(bounds[1][i]), int(v))
-
-      pack = "<" + ('H'*len(values))
-
-      subChunk = struct.pack(pack, *values)
-      i_chunk += subChunk
-
+  i_chunk, bounds = packit(asciiType, npType, draco, indices, config, 'INDICES', verbose)
 
   bufferview = BufferView()
   bufferview.target = ELEMENT_ARRAY_BUFFER
   bufferview.buffer = attributeindex+1 # this is last buffer.. for now only -> properties below
   bufferview.byteOffset = 0
-  bufferview.byteLength = len(chunk)
-
-  # print(len(chunk), len(indices))
+  bufferview.byteLength = len(i_chunk)
 
   primitive.indices = len(accessors) # again, NOT last one!
 
   accessor = Accessor()
-  # print(accessor)
   accessor.bufferView = len(bufferviews) # the last buffer view
-  accessor.byteOffset = 0#byteOffset
+  accessor.byteOffset = 0
   accessor.componentType = UNSIGNED_SHORT
   accessor.count = len(indices)
   accessor.type = SCALAR
@@ -593,8 +363,17 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
   accessor.max = list(bounds[1])
 
 
+
+
+
+
+
+
+
+
+
   #
-  # properties
+  # per-fiber properties
   # 
   properties = {} # this will later hold our accessor id's for the property data
   for p_index,p_name in enumerate(fibercluster['per_streamline_data'].keys()):
@@ -603,160 +382,24 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
     aType = fibercluster['per_streamline_data'][p_name]['type']
     data = fibercluster['per_streamline_data'][p_name]['data']
 
-    if componentType == pygltflib.FLOAT:
-      asciiType = 'f'
-      npType = float
+    asciiType, npType = componentTypeConverter(componentType, verbose)
 
-    elif componentType == pygltflib.UNSIGNED_INT:
-      asciiType = 'I'
-      npType = int
+    chunk, bounds = packit(asciiType, npType, draco, data, config, p_name, verbose)
 
-    elif componentType == pygltflib.UNSIGNED_BYTE:
-      asciiType = 'B'
-      npType = int
-
-    else:
-      asciiType = 'f'
-      npType = float
-      print('Type not supported!', componentType)
-
-    if draco:
-
-      # print(data.shape)
-
-      bounds = [[],[]]
-      if data.ndim > 1:
-        for k in range(data.shape[1]):
-          bounds[0].append(npType(np.min(data[:,k])))
-          bounds[1].append(npType(np.max(data[:,k])))
-      else:
-        bounds = [[npType(np.min(data))], [npType(np.max(data))]]
-        
-      bounds = np.nan_to_num(bounds, copy=False).astype(np.float)
-
-      # for index, values in enumerate(data):
-      #   # print(index, values)
-
-        
-      #   if not type(values) is np.ndarray:
-      #     values = [float(values)]
-
-      #   if index == 0:
-      #     # first loop run
-      #     bounds = (list([float(v) for v in values]), list([float(v) for v in values]))
-      #   else:
-      #     for i,v in enumerate(values):       
-      #       bounds[0][i] = min(float(bounds[0][i]), float(v))
-      #       bounds[1][i] = max(float(bounds[1][i]), float(v))
-
-      # print(bounds)
-      # print(bounds2)
-
-      if config:
-
-        if p_name in config or '*' in config:
-
-          if not p_name in config:
-            config[p_name] = dict(config['*'])
-
-          position = config[p_name]['position']
-          sequential = config[p_name]['sequential']
-          qb = config[p_name]['quantization_bits']
-          cl = config[p_name]['compression_level']
-          qrange = config[p_name]['quantization_range']
-          qorigin = config[p_name]['quantization_origin']
-
-          if verbose:
-            print ('Custom config for', p_name)
-
-        else:
-          # compress the chunks
-          position = False
-          sequential = True
-          qb=14
-          cl=1
-          qrange=-1
-          qorigin=None
-
-      else:
-
-        # compress the chunks
-        position = False
-        sequential = True
-        qb=14
-        cl=1
-        qrange=-1
-        qorigin=None
-
-      np.nan_to_num(data, copy=False)
-
-      # print(data.shape)
-
-      if data.shape[0] == 0:
-        if verbose:
-          print('Property with length 0! Skipping..')
-        chunk = b""
-      else:
-        chunk = TrakoDracoPy.encode_point_cloud_to_buffer(data.ravel(), position=position, sequential=sequential, 
-          quantization_bits=qb, compression_level=cl, quantization_range=qrange, quantization_origin=qorigin)
-
-    else:
-
-      #
-      # create bytestream for buffer
-      #
-      bounds = [[],[]]
-      if data.ndim > 1:
-        for k in range(data.shape[1]):
-          bounds[0].append(npType(np.min(data[:,k])))
-          bounds[1].append(npType(np.max(data[:,k])))
-      else:
-        bounds = [[npType(np.min(data))], [npType(np.max(data))]]
-
-      bounds = np.nan_to_num(bounds, copy=False).astype(np.float)
-
-      chunk = b""
-      # bounds = (None, None) # min,max
-      for index, values in enumerate(data):
-
-        
-        if not type(values) is np.ndarray:
-          values = [values]
-
-        # if chunk == b"":
-        #   # first loop run
-        #   bounds = (list([float(v) for v in values]), list([float(v) for v in values]))
-        # else:
-        #   for i,v in enumerate(values):       
-        #     bounds[0][i] = min(float(bounds[0][i]), float(v))
-        #     bounds[1][i] = max(float(bounds[1][i]), float(v))
-
-        pack = "<" + (asciiType*len(values))
-
-        subChunk = struct.pack(pack, *values)
-        chunk += subChunk
-
-
-    # we need bufferview
+    # we need a bufferview
     # and an accessor
     p_bufferview = BufferView()
     p_bufferview.target = ARRAY_BUFFER
-    # print(buffers.keys())
     p_bufferview.buffer = attributeindex+1+p_index+1 # first scalars, then indices, then properties
-    p_bufferview.byteOffset = 0#len(chunkers[attributename])##byteOffset 
+    p_bufferview.byteOffset = 0
     p_bufferview.byteLength = len(chunk) 
     p_bufferviews.append(p_bufferview)
 
-    # print(len(chunkers[attributename]))
-
     p_chunkers[p_name] += chunk
 
-    # byteOffset += len(chunk)
-
     p_accessor = Accessor()
-    # print(accessor)
     p_accessor.bufferView = len(bufferviews) + len(p_bufferviews)
-    p_accessor.byteOffset = 0#byteOffset
+    p_accessor.byteOffset = 0
     p_accessor.componentType = componentType
     p_accessor.count = len(data)
     p_accessor.type = aType
@@ -764,11 +407,16 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
     p_accessor.max = list(bounds[1])
     p_accessors.append(p_accessor)
 
-
     properties[p_name] = len(accessors) + len(p_accessors)
 
 
   primitive.extras = {'properties': properties}
+
+
+
+  #
+  # Setup glTF structure
+  #
 
   # add this streamline to the mesh
   mesh.primitives.append(primitive)
@@ -780,6 +428,9 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
   # add the bufferviews and the accessors
   gltf.bufferViews += bufferviews + [bufferview] + p_bufferviews # per vertex, indices, per streamline
   gltf.accessors += accessors + [accessor] + p_accessors
+
+
+
 
   #
   # store all buffer data base64-encoded
@@ -818,3 +469,142 @@ def fibercluster2gltf(fibercluster, draco=False, config=None, verbose=True):
 
   return gltf
 
+
+
+
+
+
+
+#
+#
+#
+def componentTypeConverter(componentType, verbose):
+  '''
+  '''
+  if componentType == pygltflib.FLOAT:
+    asciiType = 'f'
+    npType = float
+
+  elif componentType == pygltflib.UNSIGNED_INT:
+    asciiType = 'I'
+    npType = int
+
+  elif componentType == pygltflib.UNSIGNED_BYTE:
+    asciiType = 'B'
+    npType = int
+
+  else:
+    asciiType = 'f'
+    npType = float
+    if verbose:
+      print('Type not supported!', componentType)
+
+  return asciiType, npType
+
+
+
+#
+#
+#
+def config2dracoparameters(config, field, verbose=False):
+  '''
+  '''
+
+  # default parameters
+  position = False
+  if (field == 'POSITION'):
+    position = True
+
+  sequential = True
+  qb=14
+  cl=1
+  qrange=-1
+  qorigin=None
+
+  if config:
+
+    if field in config or '*' in config:
+
+      if not field in config:
+        # use * config if name is not explicitly defined
+        config[field] = dict(config['*']) 
+
+      position = config[field]['position']
+      sequential = config[field]['sequential']
+      qb = config[field]['quantization_bits']
+      cl = config[field]['compression_level']
+      qrange = config[field]['quantization_range']
+      qorigin = config[field]['quantization_origin']
+
+      if verbose:
+        print ('Custom config for', field)
+
+  return (position, sequential, qb, cl, qrange, qorigin)
+
+
+#
+#
+#
+def packit(asciiType, npType, draco, data, config, field, verbose):
+  '''
+  data needs to be a numpy array
+  '''
+  if draco:
+
+    bounds = [[],[]]
+    if data.ndim > 1:
+      for k in range(data.shape[1]):
+        bounds[0].append(npType(np.min(data[:,k])))
+        bounds[1].append(npType(np.max(data[:,k])))
+    else:
+      bounds = [[npType(np.min(data))], [npType(np.max(data))]]
+      
+    # we don't care about NaNs in the bounds
+    # and they should be float no matter what
+    bounds = np.nan_to_num(bounds, copy=False).astype(np.float) 
+
+    position, sequential, qb, cl, qrange, qorigin = config2dracoparameters(config, field, verbose)
+
+    #
+    # replace NaN in a dirty way for now
+    #
+    if len(np.where(np.isnan(data))[0]) != 0:
+      print('*** WARNING: Replacing NaN values with 0! ***')
+      np.nan_to_num(data, copy=False)
+
+    if len(data) == 0:
+      if verbose:
+        print('Scalar with length 0! Skipping..', field)
+      chunk = b""
+    else:
+      chunk = TrakoDracoPy.encode_point_cloud_to_buffer(data.ravel(), position=position, sequential=sequential, 
+        quantization_bits=qb, compression_level=cl, quantization_range=qrange, quantization_origin=qorigin)
+
+  else:
+
+    bounds = [[],[]]
+    if data.ndim > 1:
+      for k in range(data.shape[1]):
+        bounds[0].append(npType(np.min(data[:,k])))
+        bounds[1].append(npType(np.max(data[:,k])))
+    else:
+      bounds = [[npType(np.min(data))], [npType(np.max(data))]]
+
+    bounds = bounds.astype(np.float)
+
+    #
+    # create bytestream for buffer
+    #
+    chunk = b""
+    for index, values in enumerate(data):
+      
+      if not type(values) is np.ndarray:
+        values = [values]
+
+      pack = "<" + (asciiType*len(values))
+
+      subChunk = struct.pack(pack, *values)
+      chunk += subChunk
+
+
+  return chunk, bounds
