@@ -17,6 +17,68 @@ Diffusion Tensor Imaging (DTI) allows to estimate the brain's white matter tract
 
 Trako is a new file format that stores streamlines and associated per-vertex and per-fiber data as glTF containers with compression. We use the Draco algorithm to compress X,Y,Z coordinates, scalars, and properties.
 
+### Custom parameters
+
+Trako allows a detailed configuration of encoding parameters. Customizations can be configured in a JSON file to specify different parameters for different attributes.
+
+We include an example configuration `DATA/test.conf`.
+```
+{
+    
+  'POSITION': {
+    'position':True,
+    'sequential':True,
+    'quantization_bits':14,
+    'compression_level':1,
+    'quantization_range':-1,
+    'quantization_origin':None
+  },
+  'INDICES': {
+    'position':False,
+    'sequential':True,
+    'quantization_bits':14,
+    'compression_level':1,
+    'quantization_range':-1,
+    'quantization_origin':None
+  },
+  'RTOP2': { # configure custom settings per attribute name
+    'position':False,
+    'sequential':True,
+    'quantization_bits':20,
+    'compression_level':1,
+    'quantization_range':-1,
+    'quantization_origin':None
+  }
+
+}
+```
+
+This configuration configures a scalar named RTOP2 with a higher bitrate than other attributes. It is also possible to use a generic configuration (for example to reduce the quantization bitrate for all attributes) as follows:
+
+
+```
+{
+    
+  '*': {
+    'position':False,
+    'sequential':True,
+    'quantization_bits':11,
+    'compression_level':1,
+    'quantization_range':-1,
+    'quantization_origin':None
+  }
+
+}
+```
+
+The configuration is only relevant during compression and can be used as follows:
+
+```
+./trakofy -i DATA/example.vtp -o /tmp/test.tko -c DATA/test.conf
+```
+
+## Experiments
+
 <table>
   <tr>
     <td><img src="https://github.com/haehn/TRAKO/blob/master/IPY/newplot(3).png?raw=true"></td>
