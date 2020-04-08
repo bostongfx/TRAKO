@@ -1,0 +1,42 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="css/default.css">
+    <script type="text/javascript" src="js/vtk.js"></script>
+    <script src="js/draco/draco_decoder.js"></script>
+
+    <script src="js/vtkTrakoReader.js"></script>
+
+    <script type="text/javascript">
+
+      window.onload = function() {
+
+        vtkTrakoReader.read('../DATA/example.tko', render);
+
+      };
+
+      function render(polydata) {
+
+        var fullScreenRenderer = vtk.Rendering.Misc.vtkFullScreenRenderWindow.newInstance();
+        var renderer = fullScreenRenderer.getRenderer();
+        var renderWindow = fullScreenRenderer.getRenderWindow();
+
+        var mapper = vtk.Rendering.Core.vtkMapper.newInstance();
+        var actor = vtk.Rendering.Core.vtkActor.newInstance();
+        
+        actor.setMapper(mapper);
+        mapper.setInputData(polydata);
+
+        renderer.addActor(actor);
+        renderer.resetCamera();
+        renderWindow.render();  
+
+      };
+
+    </script>
+  </head>
+
+  <body>
+  </body>
+</html>

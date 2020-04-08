@@ -144,7 +144,7 @@ def convert(input, output=None, verbose=True):
 
     if v:
       # valid property
-      
+
       draco_points_reshaped = decode(gltf, v)
 
       p_name = k

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>three.js webgl - glTF loader</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="main.css">
+
+    <script src='js/three.min.js'></script>
+    <script src='js/OrbitControls.js'></script>
+    <script src='js/TKOLoader.js'></script>
+    <script src='js/draco/draco_decoder.js'></script>
+  </head>
+
+  <body>
+
+    <script type="text/javascript">
+
+      var container, controls;
+      var camera, scene, renderer;
+
+      init();
+      render();
+
+      function init() {
+
+        container = document.createElement( 'div' );
+        document.body.appendChild( container );
+
+        camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
+        camera.position.set( 0,0, 300 );
+
+        scene = new THREE.Scene();
+
+        //
+        window.dracoDecoderModule = DracoDecoderModule();
+        window.dracoDecoder = new window.dracoDecoderModule.Decoder();
+
+
+        var loader = new THREE.TKOLoader();
+        loader.load( '../DATA/example.tko', function ( tko ) {
+
+          scene.add( tko.scene );
+
+          render();
+
+        } );
+
+
+        renderer = new THREE.WebGLRenderer( { antialias: true } );
+        renderer.setPixelRatio( window.devicePixelRatio );
+        renderer.setSize( window.innerWidth, window.innerHeight );
+        container.appendChild( renderer.domElement );
+
+        controls = new THREE.OrbitControls( camera, renderer.domElement );
+        controls.addEventListener( 'change', render ); 
+        controls.update();
+
+        window.addEventListener( 'resize', onWindowResize, false );
+
+        window.loader = loader;
+        window.scene = scene;
+
+      }
+
+      function onWindowResize() {
+
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+
+        renderer.setSize( window.innerWidth, window.innerHeight );
+
+        render();
+
+      }
+
+
+      function render() {
+
+        renderer.render( scene, camera );
+
+      }
+
+    </script>
+
+  </body>
+</html>
