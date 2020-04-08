@@ -82,77 +82,21 @@ def convert(input, output=None, verbose=True):
   #
   # position
   #
-
-  # grab accessor
-  accessor = gltf.accessors[attributes.POSITION]
-
-  # grab bufferview
-  bufferview = accessor.bufferView
-
-  # grab buffer
-  data = gltf.buffers[gltf.bufferViews[bufferview].buffer]
-
-  # unpack data
-  magic = 'data:application/octet-stream;base64,'
-  bytes = base64.b64decode(data.uri[len(magic):])
-
-  if bytes[0:5] != b'DRACO':
-    print('Did not find Draco compressed data..')
-
-  draco_points = TrakoDracoPy.decode_point_cloud_buffer(bytes).points
-
-  if accessor.type in gltfType_to_vtkNumberOfComponents:
-    number_of_elements = gltfType_to_vtkNumberOfComponents[accessor.type]
-  else:
-    # work around
-    number_of_elements = accessor.type
-
-  datatype = gltfComponentType_to_npDataType[accessor.componentType]
-  draco_points_reshaped = np.array(draco_points, dtype=datatype).reshape(int(len(draco_points)/number_of_elements), number_of_elements)
+  draco_points_reshaped = decode(gltf, attributes.POSITION)
 
   points = vtk.vtkPoints()
   points.SetData(numpy_support.numpy_to_vtk(draco_points_reshaped))
   polydata.SetPoints(points)
 
-
+  #
   # scalars
+  #
   for k,v in attributes.__dict__.items():
 
     if v:
       # valid attribute
 
-      # grab accessor
-      accessor = gltf.accessors[v]
-
-      # grab bufferview
-      bufferview = accessor.bufferView
-
-      # grab buffer
-      data = gltf.buffers[gltf.bufferViews[bufferview].buffer]
-
-      # unpack data
-      magic = 'data:application/octet-stream;base64,'
-      bytes = base64.b64decode(data.uri[len(magic):])
-
-      if bytes[0:5] != b'DRACO':
-        print('Did not find Draco compressed data..')
-
-      bytestart = gltf.bufferViews[bufferview].byteOffset
-      byteend = bytestart + gltf.bufferViews[bufferview].byteLength
-      sub_bytes = bytes[bytestart:byteend]
-
-      draco_points = TrakoDracoPy.decode_point_cloud_buffer(sub_bytes).points
-
-
-      if accessor.type in gltfType_to_vtkNumberOfComponents:
-        number_of_elements = gltfType_to_vtkNumberOfComponents[accessor.type]
-      else:
-        # work around
-        number_of_elements = accessor.type
-
-      datatype = gltfComponentType_to_npDataType[accessor.componentType]
-      draco_points_reshaped = np.array(draco_points, dtype=datatype).reshape(int(len(draco_points)/number_of_elements), number_of_elements)
-    
+      draco_points_reshaped = decode(gltf, v)
 
       scalarname = k[1:]
       vtkArr = numpy_support.numpy_to_vtk(draco_points_reshaped)
@@ -168,28 +112,7 @@ def convert(input, output=None, verbose=True):
   #
   #
   a_indices = gltf.meshes[0].primitives[0].indices
-
-  # grab accessor
-  accessor = gltf.accessors[a_indices]
-
-  # grab bufferview
-  bufferview = accessor.bufferView
-
-  # grab buffer
-  data = gltf.buffers[gltf.bufferViews[bufferview].buffer]
-
-  # unpack data
-  magic = 'data:application/octet-stream;base64,'
-  bytes = base64.b64decode(data.uri[len(magic):])
-
-  if bytes[0:5] != b'DRACO':
-    print('Did not find Draco compressed data..')
-
-  bytestart = gltf.bufferViews[bufferview].byteOffset
-  byteend = bytestart + gltf.bufferViews[bufferview].byteLength
-  sub_bytes = bytes[bytestart:byteend]
-
-  draco_points = TrakoDracoPy.decode_point_cloud_buffer(sub_bytes).points
+  draco_points = decode(gltf, a_indices, reshape=False)
 
 
   # make ints...
@@ -214,53 +137,15 @@ def convert(input, output=None, verbose=True):
 
   polydata.SetLines(cellArray)
 
-
-  ### now the properties
-
+  #
+  # properties
+  #
   for k,v in properties.items():
 
     if v:
       # valid property
-
-      # grab accessor
-      accessor = gltf.accessors[v]
-
-      # grab bufferview
-      bufferview = accessor.bufferView
-
-      # grab buffer
-      data = gltf.buffers[gltf.bufferViews[bufferview].buffer]
-
-      # unpack data
-      magic = 'data:application/octet-stream;base64,'
-      bytes = base64.b64decode(data.uri[len(magic):])
-
-      if bytes[0:5] != b'DRACO':
-        print('Did not find Draco compressed data..')
-
-
-      bytestart = gltf.bufferViews[bufferview].byteOffset
-      byteend = bytestart + gltf.bufferViews[bufferview].byteLength
-      sub_bytes = bytes[bytestart:byteend]
-
-      draco_points = TrakoDracoPy.decode_point_cloud_buffer(sub_bytes).points
-
-      if accessor.type in gltfType_to_vtkNumberOfComponents:
-        number_of_elements = gltfType_to_vtkNumberOfComponents[accessor.type]
-      else:
-        # work around
-        number_of_elements = accessor.type
-
-
-
-      # print(bytestart,byteend,len(bytes),len(draco_points),number_of_elements,datatype)
-
-      # draco_points = draco_points[bytestart:byteend]
-
-
-      datatype = gltfComponentType_to_npDataType[accessor.componentType]
-      draco_points_reshaped = np.array(draco_points, dtype=datatype).reshape(int(len(draco_points)/number_of_elements), number_of_elements)
-    
+      
+      draco_points_reshaped = decode(gltf, v)
 
       p_name = k
       vtkArr = numpy_support.numpy_to_vtk(draco_points_reshaped)
@@ -272,3 +157,43 @@ def convert(input, output=None, verbose=True):
 
   return polydata
 
+def decode(gltf, accessor_id, reshape=True):
+  '''
+  '''
+
+  # grab accessor
+  accessor = gltf.accessors[accessor_id]
+
+  # grab bufferview
+  bufferview = accessor.bufferView
+
+  # grab buffer
+  data = gltf.buffers[gltf.bufferViews[bufferview].buffer]
+
+  # unpack data
+  magic = 'data:application/octet-stream;base64,'
+  bytes = base64.b64decode(data.uri[len(magic):])
+
+  if bytes[0:5] != b'DRACO':
+    print('Did not find Draco compressed data..')
+
+  bytestart = gltf.bufferViews[bufferview].byteOffset
+  byteend = bytestart + gltf.bufferViews[bufferview].byteLength
+  sub_bytes = bytes[bytestart:byteend]
+
+  draco_points = TrakoDracoPy.decode_point_cloud_buffer(sub_bytes).points
+
+  if not reshape:
+    return draco_points
+
+
+  if accessor.type in gltfType_to_vtkNumberOfComponents:
+    number_of_elements = gltfType_to_vtkNumberOfComponents[accessor.type]
+  else:
+    # work around
+    number_of_elements = accessor.type
+
+  datatype = gltfComponentType_to_npDataType[accessor.componentType]
+  draco_points_reshaped = np.array(draco_points, dtype=datatype).reshape(int(len(draco_points)/number_of_elements), number_of_elements)
+
+  return draco_points_reshaped
