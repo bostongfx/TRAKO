@@ -85,6 +85,8 @@ xtkTrakoReader.prototype.parse = function() {
 
   }
 
+  // TODO add colors and normals
+  // TODO scalars and properties
 
   return f;
 
