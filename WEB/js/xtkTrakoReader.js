@@ -45,7 +45,7 @@ xtkTrakoReader.gltfComponentType_to_size = {
 
 };
 
-xtkTrakoReader.prototype.parse = function() {
+xtkTrakoReader.prototype.parse = function(gltf) {
 
   f = new X.fibers();
   f.type = 'LINES';

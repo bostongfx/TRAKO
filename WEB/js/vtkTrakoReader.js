@@ -45,7 +45,7 @@ vtkTrakoReader.gltfComponentType_to_size = {
 
 };
 
-vtkTrakoReader.prototype.parse = function() {
+vtkTrakoReader.prototype.parse = function(gltf) {
 
   var polydata = vtk.Common.DataModel.vtkPolyData.newInstance();
 

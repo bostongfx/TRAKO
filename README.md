@@ -106,9 +106,11 @@ We also used Trako to compress a single whole brain tractography dataset with 15
 
 With default parameters, Trako uses lossy compression for position data and per-vertex/per-fiber scalar values with a mean relative loss of less than 0.0001 (besides RGB values as EmbeddingColor). We show the relative information loss for two subjects with 800 fiber clusters each on the left, and the relative information loss for a single whole brain tractography dataset on the right.
 
-## Visualization
+## Visualization using WebGL
 
 We provide JavaScript parsers to visualize Trako (.TKO) files with <a href='https://haehn.github.io/TRAKO/WEB/threejs.html'>Three.js</a>, <a href='https://haehn.github.io/TRAKO/WEB/vtkjs.html'>Vtk.js</a>, and <a href='https://haehn.github.io/TRAKO/WEB/xtk.html'>XTK</a>.
+
+And, <a href='https://slicedrop.com'>SliceDrop</a> supports Trako too! Just drag'n'drop the .TKO files in the browser to view them.
 
 ## Developer installation (comes with test data)
 
