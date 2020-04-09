@@ -264,8 +264,9 @@ class Runner:
     if not os.path.exists(os.path.join(workingdir, restored)) or force:
       # restore again!
       t0 = time.time()
-      print(compressed)
-      print(os.path.join(workingdir, compressed))
+
+      # print(compressed)
+      # print(os.path.join(workingdir, compressed))
       restored_polydata = TKO.Decoder.toVtp(os.path.join(workingdir, compressed), verbose=False)
 
       w = vtk.vtkXMLPolyDataWriter()
@@ -290,7 +291,7 @@ class Runner:
                                                     original_data['lines'], 
                                                     original_data['points'])
 
-      print(os.path.join(workingdir, restored))
+      # print(os.path.join(workingdir, restored))
       restored_data = TKO.Util.loadvtp(os.path.join(workingdir, restored))
 
       restored_streamlines = Runner.vtk2streamlines(restored_data['number_of_streamlines'], 
