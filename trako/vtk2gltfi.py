@@ -25,7 +25,8 @@ vtkDataType_to_gltfComponentType = {
   vtk.VTK_UNSIGNED_SHORT: pygltflib.UNSIGNED_SHORT,
   vtk.VTK_INT: pygltflib.UNSIGNED_INT,
   vtk.VTK_UNSIGNED_INT: pygltflib.UNSIGNED_INT,
-  vtk.VTK_FLOAT: pygltflib.FLOAT
+  vtk.VTK_FLOAT: pygltflib.FLOAT,
+  vtk.VTK_DOUBLE: pygltflib.FLOAT
 
 }
 
