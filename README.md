@@ -108,7 +108,7 @@ With default parameters, Trako uses lossy compression for position data and per-
 
 ## Visualization using WebGL
 
-We provide JavaScript parsers to visualize Trako (.TKO) files with <a href='https://haehn.github.io/TRAKO/WEB/threejs.html'>Three.js</a>, <a href='https://haehn.github.io/TRAKO/WEB/vtkjs.html'>Vtk.js</a>, and <a href='https://haehn.github.io/TRAKO/WEB/xtk.html'>XTK</a>.
+We provide JavaScript parsers to visualize Trako (.TKO) files with <a href='https://bostongfx.github.io/TRAKO/WEB/threejs.html'>Three.js</a>, <a href='https://bostongfx.github.io/TRAKO/WEB/vtkjs.html'>Vtk.js</a>, and <a href='https://bostongfx.github.io/TRAKO/WEB/xtk.html'>XTK</a>.
 
 And, <a href='https://slicedrop.com'>SliceDrop</a> supports Trako too! Just drag'n'drop the .TKO files in the browser to view them.
 
