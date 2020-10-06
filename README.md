@@ -127,3 +127,23 @@ cd TRAKO
 
 python setup.py install
 ```
+
+## Trako @ MICCAI 2020
+
+Please cite TRAKO as follows:
+```
+@inproceedings{haehn2020trako,
+  title={TRAKO: Efficient Transmission of Tractography Data for Visualization},
+  author={Haehn, Daniel and Franke, Loraine and Zhang, Fan and Karayumak, Suheyla Cetin and Pieper, Steve and O'Donnell, Lauren and Rathi, Yogesh},
+  abstract={Fiber tracking produces large tractography datasets that are tens of gigabytes in size consisting of millions of streamlines. Such vast amounts of data require formats that allow for efficient storage, transfer, and visualization. We present TRAKO, a new data format based on the Graphics Layer Transmission Format (glTF) that enables immediate graphical and hardware-accelerated processing. We integrate a state-of-the-art compression technique for vertices, streamlines, and attached scalar and property data. We then compare TRAKO to existing tractography storage methods and provide a detailed evaluation on eight datasets. TRAKO can achieve data reductions of over 28x without loss of statistical significance when used to replicate analysis from previously published studies. },
+  booktitle={Medical Image Computing and Computer-Assisted Intervention (MICCAI)},
+  pages={XXX--XXX},
+  year={2020},
+  supplemental={http://danielhaehn.com/papers/haehn2020trako_supplemental.pdf},
+  organization={Springer, Cham},
+  code={https://github.com/bostongfx/TRAKO/},
+  data={https://github.com/bostongfx/TRAKO/},
+  website={https://pypi.org/project/trako/}
+}
+```
+And here is the preprint: https://danielhaehn.com/papers/?haehn2020trako
