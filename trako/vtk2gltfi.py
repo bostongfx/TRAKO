@@ -72,6 +72,15 @@ def convert(input, config=None, verbose=True, coords_only=False):
 
   # print(polydata.GetBounds())
 
+  # remove degenerate (single point) lines
+  # see https://github.com/bostongfx/TRAKO/issues/8
+  cleaner = vtk.vtkCleanPolyData()
+  cleaner.PointMergingOff()
+  cleaner.SetInputData(polydata)
+  cleaner.Update()
+  polydata = cleaner.GetOutputDataObject(0)
+  polydata.SetVerts(vtk.vtkCellArray())
+  
   points = numpy_support.vtk_to_numpy(polydata.GetPoints().GetData())
   lines = numpy_support.vtk_to_numpy(polydata.GetLines().GetData())
   number_of_streamlines = polydata.GetLines().GetNumberOfCells()
