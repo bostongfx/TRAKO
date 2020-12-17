@@ -47,30 +47,10 @@ vtkNumberOfComponents_to_gltfType = {
 
 
 
-def convert(input, config=None, verbose=True, coords_only=False):
-
-  extension = os.path.splitext(input)[1].lower()
-
-  if extension == '.vtp':
-
-    r = vtk.vtkXMLPolyDataReader()
-    r.SetFileName(input)
-    r.Update()
-    polydata = r.GetOutput()
-
-  elif extension == '.vtk':
-
-    r = vtk.vtkPolyDataReader()
-    r.SetFileName(input)
-    r.Update()
-    polydata = r.GetOutput()
-
-  else:
-
-    raise Error('Invalid input format.')
-
-
-  # print(polydata.GetBounds())
+def convert(polydata, config=None, verbose=True, coords_only=False):
+  '''
+  Takes a vtk polydata and converts it to TKO.
+  '''
 
   # remove degenerate (single point) lines
   # see https://github.com/bostongfx/TRAKO/issues/8
