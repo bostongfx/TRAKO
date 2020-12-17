@@ -3,7 +3,7 @@ conda create --name TRAKO python=3.6
 conda activate TRAKO
 conda install numpy
 conda install matplotlib
-conda install -c anaconda vtk 
+conda install -c conda-forge pyvista "vtk=8.1.2" "libnetcdf=4.6.2"
 conda install -c conda-forge scikit-build 
 pip install pygltflib
 pip install prettytable
