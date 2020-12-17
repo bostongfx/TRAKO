@@ -1,4 +1,18 @@
-# create environment
+#
+# get TRAKO
+#
+git clone git@github.com:haehn/TRAKO.git
+cd TRAKO
+
+
+#
+# 1) Use environment.yml file
+#
+conda env create -f environment.yml
+
+#
+# or 2) create environment from scratch
+#
 conda create --name TRAKO python=3.6
 conda activate TRAKO
 conda install numpy
@@ -8,9 +22,11 @@ conda install -c conda-forge scikit-build
 pip install pygltflib
 pip install prettytable
 
-# get TRAKO
-git clone git@github.com:haehn/TRAKO.git
-cd TRAKO
+
+
+#
+# Setup C++ code base.
+#
 
 # initialize DracoPy submodule
 git submodule init
@@ -24,6 +40,6 @@ python setup.py install
 
 # test TRAKO
 cd ../../
-./trakofy.py -i DATA/example.vtp -o /tmp/test.tko
-./untrakofy.py -i /tmp/test.tko -o /tmp/restored.vtp
-./compare.py -a DATA/example.vtp -b /tmp/restored.vtp
+./trakofy -i DATA/example.vtp -o /tmp/test.tko
+./untrakofy -i /tmp/test.tko -o /tmp/restored.vtp
+./compare -a DATA/example.vtp -b /tmp/restored.vtp
