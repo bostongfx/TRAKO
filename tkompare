@@ -10,9 +10,9 @@ def compare(a, b):
   '''
   '''
 
-  if (os.path.splitext(a)[1].lower() == '.vtp' and \
-      os.path.splitext(b)[1].lower() == '.vtp') or \
-     (os.path.splitext(a)[1].lower() == '.vtk' and \
+  if (os.path.splitext(a)[1].lower() == '.vtp' or \
+      os.path.splitext(b)[1].lower() == '.vtp') and \
+     (os.path.splitext(a)[1].lower() == '.vtk' or \
       os.path.splitext(b)[1].lower() == '.vtk'):
 
     sizeA = os.path.getsize(a)
