@@ -87,6 +87,7 @@ def convert(input, output=None, verbose=True):
   points = vtk.vtkPoints()
   points.SetData(numpy_support.numpy_to_vtk(draco_points_reshaped))
   polydata.SetPoints(points)
+  pointdata = polydata.GetPointData()
 
   #
   # scalars
@@ -101,11 +102,16 @@ def convert(input, output=None, verbose=True):
       scalarname = k[1:]
       vtkArr = numpy_support.numpy_to_vtk(draco_points_reshaped)
       vtkArr.SetName(scalarname)
-      polydata.GetPointData().AddArray(vtkArr)
+      pointdata.AddArray(vtkArr)
 
       if verbose:
         print('Restored scalar', scalarname)
 
+      if draco_points_reshaped.shape[1] == 1 and pointdata.GetScalars() is None:
+        pointdata.SetScalars(vtkArr)
+
+      if draco_points_reshaped.shape[1] == 9 and pointdata.GetTensors() is None:
+        pointdata.SetTensors(vtkArr)
   #
   #
   # now the indices / cell data
