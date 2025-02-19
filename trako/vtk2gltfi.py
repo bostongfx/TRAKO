@@ -551,7 +551,7 @@ def packit(asciiType, npType, draco, data, config, field, verbose):
       
     # we don't care about NaNs in the bounds
     # and they should be float no matter what
-    bounds = np.nan_to_num(bounds, copy=False).astype(np.float) 
+    bounds = np.nan_to_num(np.asarray(bounds), copy=False).astype(float) 
 
     position, sequential, qb, cl, qrange, qorigin = config2dracoparameters(config, field, verbose)
 
